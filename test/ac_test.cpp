@@ -19,8 +19,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <green/ac/nevanlinna.h>
 #include <green/ac/except.h>
+#include <green/ac/nevanlinna.h>
 
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -90,7 +90,7 @@ TEST_CASE("Nevanlinna Solver") {
   }
 
   for (size_t iw = 0; iw < n_omega; ++iw) {
-    re_grid[iw]    = std::complex<double>(iw * (omega_max - omega_min) / n_omega, eta);
+    re_grid[iw] = std::complex<double>(iw * (omega_max - omega_min) / n_omega, eta);
     re_data[iw] = 1. / (re_grid[iw] - mu);
   }
 
@@ -99,5 +99,7 @@ TEST_CASE("Nevanlinna Solver") {
 
   REQUIRE(std::equal(result.begin(), result.end(), re_data.begin(),
                      [](const std::complex<double>& x, const std::complex<double>& y) { return std::abs(x - y) < 1e-12; }));
-
+  std::vector<std::complex<double>> result2 = a.evaluate(re_grid);
+  REQUIRE(std::equal(result2.begin(), result2.end(), re_data.begin(),
+                     [](const std::complex<double>& x, const std::complex<double>& y) { return std::abs(x - y) < 1e-12; }));
 }

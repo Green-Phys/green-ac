@@ -39,7 +39,7 @@ TEST_CASE("MPFR Math") {
     REQUIRE(std::abs(double(b) - 5.0) < 1e-12);
     b *= mpfr_float(2);
     REQUIRE(std::abs(double(b) - 10.0) < 1e-12);
-    mpfr_float c = a+b;
+    mpfr_float c = a + b;
     REQUIRE(std::abs(double(c) - 10.0) < 1e-12);
   }
 
