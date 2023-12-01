@@ -1,0 +1,46 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    strategy:
+      fail-fast: false
+
+    runs-on: self-hosted
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build
+      run: |
+        module load BuildEnv/gcc-12.2.0.lua;
+        mkdir build && cd build && cmake  -DCMAKE_CXX_FLAGS=" --coverage -fno-inline -fno-inline-small-functions -fno-default-inline -fprofile-arcs -ftest-coverage " ..;
+        make -j2 || make -j1 VERBOSE=1
+
+    - name: Test
+      env:
+        HDF5_USE_FILE_LOCKING: 'FALSE'
+      run: |
+        module load BuildEnv/gcc-12.2.0.lua;
+        cd build;
+        ctest -j4 --output-on-failure
+    - name: Run coverage
+      run: |
+        module load BuildEnv/gcc-12.2.0.lua;
+        cd build;
+        lcov --capture --directory . --output-file coverage.info;
+        lcov --remove coverage.info '/usr/*' --output-file coverage.info
+        lcov --remove coverage.info '/opt/ohpc/pub/compiler/*' --output-file coverage.info
+        lcov --remove coverage.info '*catch*' --output-file coverage.info
+        lcov --list coverage.info
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
