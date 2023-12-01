@@ -41,7 +41,7 @@ void define_parameters(green::params::params& p) {
   p.define<green::ac::AC_KIND>("kind", "Type of continuation (currently only Nevanlinna is implemented)");
 }
 
-void run(const green::params::params& p) {
+void run_nevanlinna(const green::params::params& p) {
   green::grids::transformer_t                      tr(p);
   green::ndarray::ndarray<std::complex<double>, 5> data;
   green::ndarray::ndarray<std::complex<double>, 4> data_out;
@@ -122,7 +122,13 @@ int main(int argc, char** argv) {
   }
 
   try {
-    run(p);
+    switch(green::ac::AC_KIND(p["kind"])) {
+      case green::ac::Nevanlinna :
+        run_nevanlinna(p);
+        break;
+      default:
+        throw std::runtime_error("Only Nevanlinna is implemented for now");
+    }
   } catch (std::exception& e) {
     if (!green::utils::context.global_rank) std::cerr << e.what() << std::endl;
     MPI_Abort(green::utils::context.global, -1);
