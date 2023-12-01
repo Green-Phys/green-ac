@@ -32,7 +32,7 @@ namespace green::ac::nevanlinna {
     std::transform(data.begin(), data.end(), mdata.begin(),
                    [I](const std::complex<double>& d) { return complex_t(-d - I) / complex_t(-d + I); });
     return mdata;
-  }
+  } // LCOV_EXCL_LINE
 
   void nevanlinna_solver::build(const std::vector<std::complex<double>>& mesh, const std::vector<std::complex<double>>& data) {
     assert(mesh.size() == data.size());
