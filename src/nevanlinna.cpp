@@ -150,5 +150,5 @@ namespace green::ac::nevanlinna {
       }
     }
     return results;
-  }
+  } // LCOV_EXCL_LINE
 }  // namespace green::ac::nevanlinna
