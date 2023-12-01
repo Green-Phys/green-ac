@@ -83,6 +83,7 @@ TEST_CASE("Nevanlinna Solver") {
   }
 
   REQUIRE_THROWS_AS(a.build(im_grid, im_data), ac_nevanlinna_error);
+  REQUIRE_THROWS_AS(a.evaluate(re_grid), ac_nevanlinna_error);
 
   for (int iw = 0, w = -n_iw / 2; iw < n_iw; ++iw, ++w) {
     im_grid[iw] = (2 * iw + 1) * M_PI * std::complex<double>(0, 1) / beta;

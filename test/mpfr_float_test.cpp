@@ -19,6 +19,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <iostream>
 #include <green/ac/mpfr_float.h>
 
 #include <Eigen/Dense>
@@ -41,6 +42,8 @@ TEST_CASE("MPFR Math") {
     REQUIRE(std::abs(double(b) - 10.0) < 1e-12);
     mpfr_float c = a + b;
     REQUIRE(std::abs(double(c) - 10.0) < 1e-12);
+    mpfr_float d(a + b);
+    REQUIRE(std::abs(double(d) - 10.0) < 1e-12);
   }
 
   SECTION("Normal") {
@@ -106,6 +109,21 @@ TEST_CASE("MPFR Complex") {
     REQUIRE(double(std::abs(std::conj(std::complex{mpfr_float(2.), mpfr_float(2.)}) - std::conj(std::complex{2., 2.}))) < 1e-12);
     REQUIRE(std::abs(double(
                 std::abs(std::sqrt(std::complex{mpfr_float(2.), mpfr_float(2.)}) - std::sqrt(std::complex{2., 2.})))) < 1e-12);
+    a.real(5.);
+    a.imag(3.);
+    b.real(1.);
+    b.imag(1.);
+    a /= b;
+    REQUIRE(a == std::complex(4., -1.));
+    a *= b;
+    REQUIRE(a == std::complex(5., 3.));
+    b *= 2.0;
+    REQUIRE(b == std::complex(2., 2.));
+    b /= 4.0;
+    REQUIRE(b == std::complex(0.5, 0.5));
+
+    REQUIRE(a.real() == std::real(a));
+    REQUIRE(a.imag() == std::imag(a));
   }
   SECTION("Mixed Type Math") {
     std::complex a(mpfr_float(1), mpfr_float(1));

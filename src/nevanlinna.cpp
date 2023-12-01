@@ -104,9 +104,6 @@ namespace green::ac::nevanlinna {
 
   std::vector<std::complex<double>> nevanlinna_solver::evaluate_internal(const std::vector<std::complex<double>>& grid) const {
     size_t M = _phis.size();
-    if (M == 0) {
-      throw ac_nevanlinna_error("Empty continuation data. Please run solve(...) first.");
-    }
     complex_t                         I{0., 1.};
     complex_t                         One{1., 0.};
     std::vector<std::complex<double>> results(grid.size());
