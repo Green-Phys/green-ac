@@ -19,7 +19,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <iostream>
 #include <green/ac/mpfr_float.h>
 
 #include <Eigen/Dense>
@@ -28,6 +27,12 @@
 #include <complex>
 
 using namespace green::ac;
+
+mpfr_float res(const mpfr_float& a, const mpfr_float& b) {
+  return a + b;
+}
+
+
 TEST_CASE("MPFR Math") {
   SECTION("Inplace") {
     mpfr_float a(10);
@@ -42,7 +47,7 @@ TEST_CASE("MPFR Math") {
     REQUIRE(std::abs(double(b) - 10.0) < 1e-12);
     mpfr_float c = a + b;
     REQUIRE(std::abs(double(c) - 10.0) < 1e-12);
-    mpfr_float d(a + b);
+    mpfr_float d{std::move(res(a, b))};
     REQUIRE(std::abs(double(d) - 10.0) < 1e-12);
   }
 
@@ -111,6 +116,8 @@ TEST_CASE("MPFR Complex") {
                 std::abs(std::sqrt(std::complex{mpfr_float(2.), mpfr_float(2.)}) - std::sqrt(std::complex{2., 2.})))) < 1e-12);
     a.real(5.);
     a.imag(3.);
+    c = a;
+    REQUIRE(c == a);
     b.real(1.);
     b.imag(1.);
     a /= b;
@@ -124,6 +131,11 @@ TEST_CASE("MPFR Complex") {
 
     REQUIRE(a.real() == std::real(a));
     REQUIRE(a.imag() == std::imag(a));
+    a.imag(0);
+    REQUIRE(a == 5);
+    REQUIRE(5 == a);
+    REQUIRE(a == c.real());
+    REQUIRE(c.real() == a);
   }
   SECTION("Mixed Type Math") {
     std::complex a(mpfr_float(1), mpfr_float(1));

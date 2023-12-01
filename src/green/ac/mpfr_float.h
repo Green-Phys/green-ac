@@ -53,7 +53,9 @@ namespace green::ac {
       mpfr_set_d(val, rhs, MPFR_RNDD);
     }
 
-    ~mpfr_float() { mpfr_clear(val); }
+    ~mpfr_float() {
+      if (val->_mpfr_d) mpfr_clear(val);
+    }
     /*
      * Copy/Move constructors
      */
@@ -82,7 +84,7 @@ namespace green::ac {
 
     inline            operator double() const { return mpfr_get_d(val, MPFR_RNDD); }
 
-    mpfr_t            val{};
+    mpfr_t            val;
 
     inline mpfr_float operator-() const {
       mpfr_float res(*this);
@@ -173,7 +175,7 @@ namespace green::ac {
     mpfr_float res(0.0);
     mpfr_atan2(res.val, x.val, y.val, MPFR_RNDD);
     return res;
-  }
+  }  // LCOV_EXCL_LINE
 
 }  // namespace green::ac
 
@@ -279,18 +281,28 @@ namespace std {
     return x.real() == y.real() && x.imag() == y.imag();
   }
 
-  template <typename S>
-  std::enable_if_t<green::ac::type_traits::is_scalar<S>, bool> operator==(const complex<green::ac::mpfr_float>& x, const complex<S>& y) {
-    return std::abs(S(x.real()) - y.real() ) < 1e-12 && std::abs(S(x.imag()) - y.imag()) < 1e-12;
+  template <>
+  inline bool operator==(const complex<green::ac::mpfr_float>& x, const green::ac::mpfr_float& y) {
+    return x.real() == y && x.imag() == green::ac::mpfr_float(0);
+  }
+
+  template <>
+  inline bool operator==(const green::ac::mpfr_float& x, const complex<green::ac::mpfr_float>& y) {
+    return x == y.real() && green::ac::mpfr_float(0) == y.imag();
   }
 
   template <typename S>
-  std::enable_if_t<green::ac::type_traits::is_scalar<S>, bool> operator==(const complex<green::ac::mpfr_float>& x, const S& y) {
+  std::enable_if_t<std::is_arithmetic_v<S>, bool> operator==(const complex<green::ac::mpfr_float>& x, const complex<S>& y) {
+    return std::abs(S(x.real()) - y.real()) < 1e-12 && std::abs(S(x.imag()) - y.imag()) < 1e-12;
+  }
+
+  template <typename S>
+  std::enable_if_t<std::is_arithmetic_v<S>, bool> operator==(const complex<green::ac::mpfr_float>& x, const S& y) {
     return std::abs(S(x.real()) - y) < 1e-12 && x.imag() == 0;
   }
 
   template <typename S>
-  std::enable_if_t<green::ac::type_traits::is_scalar<S>, bool> operator==(const S& y, const complex<green::ac::mpfr_float>& x) {
+  std::enable_if_t<std::is_arithmetic_v<S>, bool> operator==(const S& y, const complex<green::ac::mpfr_float>& x) {
     return std::abs(S(x.real()) - y) < 1e-12 && x.imag() == 0;
   }
 
@@ -349,7 +361,7 @@ namespace std {
     green::ac::mpfr_float arg_;
     arg_ = green::ac::atan2(x.imag(), x.real());
     return arg_;
-  } // LCOV_EXCL_LINE
+  }  // LCOV_EXCL_LINE
 
   inline complex<green::ac::mpfr_float> sqrt(const complex<green::ac::mpfr_float>& x) {
     return std::polar(green::ac::sqrt(std::abs(x)), std::arg(x) / green::ac::mpfr_float(2));
