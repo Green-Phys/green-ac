@@ -59,7 +59,6 @@ namespace green::ac::nevanlinna {
       _phis[j + 1] = (-_abcds[j + 1](1, 1) * mdata[j + 1] + _abcds[j + 1](0, 1)) /
                      (_abcds[j + 1](1, 0) * mdata[j + 1] - _abcds[j + 1](0, 0));
     }
-    return;
   }
 
   std::vector<std::complex<double>> nevanlinna_solver::evaluate(const std::vector<std::complex<double>>& grid) {
@@ -74,7 +73,6 @@ namespace green::ac::nevanlinna {
         })) {
       return evaluate_internal(grid);
     }
-    std::cout << "Reevaluation" << std::endl;
     _coeffs = std::vector<matrix_t>(grid.size());
     _grid.resize(grid.size());
     std::transform(grid.begin(), grid.end(), _grid.begin(), [](const std::complex<double>& w) {
@@ -103,7 +101,6 @@ namespace green::ac::nevanlinna {
   }
 
   std::vector<std::complex<double>> nevanlinna_solver::evaluate_internal(const std::vector<std::complex<double>>& grid) const {
-    size_t M = _phis.size();
     complex_t                         I{0., 1.};
     complex_t                         One{1., 0.};
     std::vector<std::complex<double>> results(grid.size());
