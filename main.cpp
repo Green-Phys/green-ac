@@ -57,7 +57,8 @@ void run_nevanlinna(const green::params::params& p) {
     }
     ar.close();
   }
-  size_t nk = size_t(p["nk"]) ? p["nk"] : data.shape()[2];
+  size_t k_shift = p["nk"];
+  size_t nk = p["nk"].as<size_t>() ? 1 : data.shape()[2];
   if (size_t(p["nk"]) > data.shape()[2]) {
     throw green::ac::ac_data_error("Selected k-point number is larger than number of stored points.");
   }
@@ -72,7 +73,7 @@ void run_nevanlinna(const green::params::params& p) {
   }
   green::ac::nevanlinna::nevanlinna ac;
   for (size_t isk = green::utils::context.global_rank; isk < nk * ns; isk += green::utils::context.global_size) {
-    size_t ik = isk % nk;
+    size_t ik = (isk % nk) + k_shift;
     size_t is = isk / nk;
     green::ndarray::ndarray<std::complex<double>, 2> inp_t(data.shape()[0], data.shape()[3]);
     green::ndarray::ndarray<std::complex<double>, 2> inp_w(tr.sd().repn_fermi().nw(), data.shape()[3]);
@@ -86,7 +87,7 @@ void run_nevanlinna(const green::params::params& p) {
     auto out_w = ac.evaluate(wgrid);
     for (size_t iw = 0; iw < out_w.shape()[0]; ++iw) {
       for (size_t i = 0; i < data.shape()[3]; ++i) {
-        data_out(iw, is, ik, i) = out_w(iw, i);
+        data_out(iw, is, ik - k_shift, i) = out_w(iw, i);
       }
     }
   }
