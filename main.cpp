@@ -41,14 +41,31 @@ void define_parameters(green::params::params& p) {
   p.define<green::ac::AC_KIND>("kind", "Type of continuation (currently only Nevanlinna is implemented)");
 }
 
-void run_nevanlinna(const green::params::params& p) {
-  green::grids::transformer_t                      tr(p);
-  green::ndarray::ndarray<std::complex<double>, 5> data;
-  green::ndarray::ndarray<std::complex<double>, 4> data_out;
+void read_nevanlinna_data(const green::params::params& p, const green::grids::transformer_t& tr,
+                          green::ndarray::ndarray<std::complex<double>, 4>& data) {
   if (!green::utils::context.global_rank) {
     green::h5pp::archive               ar(p["input_file"], "r");
     green::ndarray::ndarray<double, 1> mesh;
-    ar[std::string(p["group"]) + "/data"s] >> data;
+    auto                               shape = green::h5pp::dataset_shape(ar.current_id(), std::string(p["group"]) + "/data"s);
+    if (shape.size() == 4) {
+      ar[std::string(p["group"]) + "/data"s] >> data;
+    } else if (shape.size() == 5) {
+      green::ndarray::ndarray<std::complex<double>, 5> tmp;
+      ar[std::string(p["group"]) + "/data"s] >> tmp;
+      size_t dim_leading = std::accumulate(tmp.shape().begin(), tmp.shape().end() - 2, 1ul, std::multiplies<size_t>());
+      data.resize(shape[0], shape[1], shape[2], shape[3]);
+      auto tmp1 = tmp.reshape(dim_leading, shape[3], shape[4]);
+      auto tmp2 = data.reshape(dim_leading, shape[3]);
+      for (size_t ld = 0; ld < dim_leading; ++ld) {
+        for (size_t i = 0; i < shape[3]; ++i) {
+          tmp2(ld, i) = tmp1(ld, i, i);
+        }
+      }
+    } else {
+      throw green::ac::ac_data_shape_error(
+          "Input data should be either 4 (diagonal orbitals)"
+          " or 5 (matrix valued function) dimensional.");
+    }
     ar[std::string(p["group"]) + "/mesh"s] >> mesh;
     if (tr.sd().repn_fermi().nts() != data.shape()[0] ||
         !std::equal(mesh.begin(), mesh.end(), tr.sd().repn_fermi().tsample().begin(),
@@ -57,8 +74,15 @@ void run_nevanlinna(const green::params::params& p) {
     }
     ar.close();
   }
+}
+
+void run_nevanlinna(const green::params::params& p) {
+  green::grids::transformer_t                      tr(p);
+  green::ndarray::ndarray<std::complex<double>, 4> data;
+  green::ndarray::ndarray<std::complex<double>, 4> data_out;
+  read_nevanlinna_data(p, tr, data);
   size_t k_shift = p["nk"];
-  size_t nk = p["nk"].as<size_t>() ? 1 : data.shape()[2];
+  size_t nk      = p["nk"].as<size_t>() ? 1 : data.shape()[2];
   if (size_t(p["nk"]) > data.shape()[2]) {
     throw green::ac::ac_data_error("Selected k-point number is larger than number of stored points.");
   }
@@ -73,13 +97,13 @@ void run_nevanlinna(const green::params::params& p) {
   }
   green::ac::nevanlinna::nevanlinna ac;
   for (size_t isk = green::utils::context.global_rank; isk < nk * ns; isk += green::utils::context.global_size) {
-    size_t ik = (isk % nk) + k_shift;
-    size_t is = isk / nk;
+    size_t                                           ik = (isk % nk) + k_shift;
+    size_t                                           is = isk / nk;
     green::ndarray::ndarray<std::complex<double>, 2> inp_t(data.shape()[0], data.shape()[3]);
     green::ndarray::ndarray<std::complex<double>, 2> inp_w(tr.sd().repn_fermi().nw(), data.shape()[3]);
     for (size_t it = 0; it < data.shape()[0]; ++it) {
       for (size_t i = 0; i < data.shape()[3]; ++i) {
-        inp_t(it, i) = data(it, is, ik, i, i);
+        inp_t(it, i) = data(it, is, ik, i);
       }
     }
     tr.tau_to_omega(inp_t, inp_w);
@@ -123,8 +147,8 @@ int main(int argc, char** argv) {
   }
 
   try {
-    switch(green::ac::AC_KIND(p["kind"])) {
-      case green::ac::Nevanlinna :
+    switch (green::ac::AC_KIND(p["kind"])) {
+      case green::ac::Nevanlinna:
         run_nevanlinna(p);
         break;
       default:

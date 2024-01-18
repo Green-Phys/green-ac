@@ -31,6 +31,12 @@ namespace green::ac {
     explicit ac_data_error(const std::string& basic_string) : runtime_error(basic_string) {}
   };
 
+  class ac_data_shape_error : public std::runtime_error {
+  public:
+    explicit ac_data_shape_error(const std::string& basic_string) : runtime_error(basic_string) {}
+  };
+
+
   class ac_nevanlinna_error : public std::runtime_error {
   public:
     explicit ac_nevanlinna_error(const std::string& basic_string) : runtime_error(basic_string) {}
