@@ -33,7 +33,7 @@ void define_parameters(green::params::params& p) {
   p.define<std::string>("input_file", "Name of the input file");
   p.define<std::string>("output_file", "Name of the output file");
   p.define<std::string>("group", "Name of the HDF5 group in the input file, that contains imaginary time data.");
-  p.define<size_t>("nk", "K-point to continue, continue all if nk=0", 0);
+  p.define<int>("nk", "K-point to continue, continue all if nk=-1", -1);
   p.define<int>("n_omega", "Number of real frequency points", 1000);
   p.define<double>("e_min", "Smallest frequency point", -5);
   p.define<double>("e_max", "Largest frequency point", 5);
@@ -43,10 +43,11 @@ void define_parameters(green::params::params& p) {
 
 void read_nevanlinna_data(const green::params::params& p, const green::grids::transformer_t& tr,
                           green::ndarray::ndarray<std::complex<double>, 4>& data) {
+  std::vector<size_t> shape(4);
   if (!green::utils::context.global_rank) {
     green::h5pp::archive               ar(p["input_file"], "r");
     green::ndarray::ndarray<double, 1> mesh;
-    auto                               shape = green::h5pp::dataset_shape(ar.current_id(), std::string(p["group"]) + "/data"s);
+    shape = green::h5pp::dataset_shape(ar.current_id(), std::string(p["group"]) + "/data"s);
     if (shape.size() == 4) {
       ar[std::string(p["group"]) + "/data"s] >> data;
     } else if (shape.size() == 5) {
@@ -74,6 +75,11 @@ void read_nevanlinna_data(const green::params::params& p, const green::grids::tr
     }
     ar.close();
   }
+  MPI_Bcast(shape.data(), 4, MPI_UNSIGNED_LONG, 0, green::utils::context.global);
+  if (green::utils::context.global_rank) {
+    data.resize(shape);
+  }
+  MPI_Bcast(data.data(), data.size(), MPI_CXX_DOUBLE_COMPLEX, 0, green::utils::context.global);
 }
 
 void run_nevanlinna(const green::params::params& p) {
@@ -81,9 +87,10 @@ void run_nevanlinna(const green::params::params& p) {
   green::ndarray::ndarray<std::complex<double>, 4> data;
   green::ndarray::ndarray<std::complex<double>, 4> data_out;
   read_nevanlinna_data(p, tr, data);
-  size_t k_shift = p["nk"];
-  size_t nk      = p["nk"].as<size_t>() ? 1 : data.shape()[2];
-  if (size_t(p["nk"]) > data.shape()[2]) {
+  size_t k_shift = p["nk"].as<int>() == -1 ? 0 : p["nk"].as<int>();
+  size_t nk      = p["nk"].as<int>() == -1 ? data.shape()[2] : 1;
+  size_t nao     = data.shape()[3];
+  if (p["nk"].as<int>() > static_cast<int>(data.shape()[2])) {
     throw green::ac::ac_data_error("Selected k-point number is larger than number of stored points.");
   }
   size_t ns = data.shape()[1];
@@ -96,24 +103,25 @@ void run_nevanlinna(const green::params::params& p) {
                 std::complex<double>(0.0, p["eta"]);
   }
   green::ac::nevanlinna::nevanlinna ac;
-  for (size_t isk = green::utils::context.global_rank; isk < nk * ns; isk += green::utils::context.global_size) {
-    size_t                                           ik = (isk % nk) + k_shift;
-    size_t                                           is = isk / nk;
+  if (!green::utils::context.global_rank) {
+    std::cout << "Performing " + std::to_string(nk * ns * nao) + " continuations." << std::endl;
+  }
+  for (size_t iski = green::utils::context.global_rank; iski < nk * ns * nao; iski += green::utils::context.global_size) {
+    size_t                                           i  = iski % nao;
+    size_t                                           ik = ((iski / nao) % nk) + k_shift;
+    size_t                                           is = iski / nao / nk;
     green::ndarray::ndarray<std::complex<double>, 2> inp_t(data.shape()[0], data.shape()[3]);
     green::ndarray::ndarray<std::complex<double>, 2> inp_w(tr.sd().repn_fermi().nw(), data.shape()[3]);
     for (size_t it = 0; it < data.shape()[0]; ++it) {
-      for (size_t i = 0; i < data.shape()[3]; ++i) {
-        inp_t(it, i) = data(it, is, ik, i);
-      }
+      inp_t(it, i) = data(it, is, ik, i);
     }
     tr.tau_to_omega(inp_t, inp_w);
     ac.solve(iwgrid, inp_w);
     auto out_w = ac.evaluate(wgrid);
     for (size_t iw = 0; iw < out_w.shape()[0]; ++iw) {
-      for (size_t i = 0; i < data.shape()[3]; ++i) {
-        data_out(iw, is, ik - k_shift, i) = out_w(iw, i);
-      }
+      data_out(iw, is, ik - k_shift, i) = out_w(iw, i);
     }
+    std::cout << "Continuation " + std::to_string(iski) + " out of " + std::to_string(nk * ns * nao) + " finished." << std::endl;
   }
   green::utils::allreduce(MPI_IN_PLACE, data_out.data(), data_out.size(), MPI_C_DOUBLE_COMPLEX, MPI_SUM,
                           green::utils::context.global);
