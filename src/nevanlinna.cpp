@@ -84,10 +84,14 @@ namespace green::ac::nevanlinna {
     matrix_t                          prod(2, 2);
     for (int i = 0; i < grid.size(); ++i) {
       matrix_t result = matrix_t::Identity(2, 2);
-      auto     z      = complex_t(grid[i]);
+      auto     z      = _grid[i];
       for (int j = 0; j < M; j++) {
-        prod << (z - _mesh[j]) / (z - std::conj(_mesh[j])), _phis[j],
-            std::conj(_phis[j]) * ((z - _mesh[j]) / (z - std::conj(_mesh[j]))), complex_t{1., 0.};
+        prod(0,0) = (z - _mesh[j]) / (z - std::conj(_mesh[j]));
+        prod(0,1) = _phis[j];
+        prod(1,0) = std::conj(_phis[j]) * ((z - _mesh[j]) / (z - std::conj(_mesh[j])));
+        prod(1,1) = One;
+        // prod << (z - _mesh[j]) / (z - std::conj(_mesh[j])), _phis[j],
+        //     std::conj(_phis[j]) * ((z - _mesh[j]) / (z - std::conj(_mesh[j]))), One;
         result *= prod;
       }
       _coeffs[i] = result;

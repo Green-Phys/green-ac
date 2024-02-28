@@ -269,8 +269,8 @@ namespace std {
     real_t _imag;
 
   public:
-    [[nodiscard]] real_t real() const { return _real; }
-    [[nodiscard]] real_t imag() const { return _imag; }
+    [[nodiscard]] const real_t& real() const { return _real; }
+    [[nodiscard]] const real_t& imag() const { return _imag; }
 
     void                 real(const real_t& re) { _real = re; }
     void                 imag(const real_t& im) { _imag = im; }
@@ -307,18 +307,18 @@ namespace std {
   }
 
   inline auto operator*(const complex<green::ac::mpfr_float>& x, const complex<green::ac::mpfr_float>& y) {
-    green::ac::mpfr_float a = x.real();
-    green::ac::mpfr_float b = x.imag();
-    green::ac::mpfr_float c = y.real();
-    green::ac::mpfr_float d = y.imag();
+    const green::ac::mpfr_float& a     = x.real();
+    const green::ac::mpfr_float& b     = x.imag();
+    const green::ac::mpfr_float& c     = y.real();
+    const green::ac::mpfr_float& d     = y.imag();
     return std::complex<green::ac::mpfr_float>((a * c - b * d), (a * d + b * c));
   }
 
   inline auto operator/(const complex<green::ac::mpfr_float>& x, const complex<green::ac::mpfr_float>& y) {
-    green::ac::mpfr_float a     = x.real();
-    green::ac::mpfr_float b     = x.imag();
-    green::ac::mpfr_float c     = y.real();
-    green::ac::mpfr_float d     = y.imag();
+    const green::ac::mpfr_float& a     = x.real();
+    const green::ac::mpfr_float& b     = x.imag();
+    const green::ac::mpfr_float& c     = y.real();
+    const green::ac::mpfr_float& d     = y.imag();
     green::ac::mpfr_float denom = c * c + d * d;
     green::ac::mpfr_float r     = (a * c + b * d) / denom;
     green::ac::mpfr_float i     = (b * c - a * d) / denom;
@@ -326,18 +326,18 @@ namespace std {
   }
 
   inline auto operator+(const complex<green::ac::mpfr_float>& x, const complex<green::ac::mpfr_float>& y) {
-    green::ac::mpfr_float a = x.real();
-    green::ac::mpfr_float b = x.imag();
-    green::ac::mpfr_float c = y.real();
-    green::ac::mpfr_float d = y.imag();
+    const green::ac::mpfr_float& a     = x.real();
+    const green::ac::mpfr_float& b     = x.imag();
+    const green::ac::mpfr_float& c     = y.real();
+    const green::ac::mpfr_float& d     = y.imag();
     return typename std::complex<green::ac::mpfr_float>((a + c), (b + d));
   }
 
   inline auto operator-(const complex<green::ac::mpfr_float>& x, const complex<green::ac::mpfr_float>& y) {
-    green::ac::mpfr_float a = x.real();
-    green::ac::mpfr_float b = x.imag();
-    green::ac::mpfr_float c = y.real();
-    green::ac::mpfr_float d = y.imag();
+    const green::ac::mpfr_float& a     = x.real();
+    const green::ac::mpfr_float& b     = x.imag();
+    const green::ac::mpfr_float& c     = y.real();
+    const green::ac::mpfr_float& d     = y.imag();
     return std::complex<green::ac::mpfr_float>((a - c), (b - d));
   }
 
