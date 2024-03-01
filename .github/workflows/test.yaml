@@ -32,7 +32,7 @@ jobs:
         ctest -j4 --output-on-failure
     - name: Run coverage
       run: |
-        module load BuildEnv/gcc-12.2.0.lua;
+        module load BuildEnv/gcc-12.2.0.lua gmp/6.2.1;
         cd build;
         lcov --capture --directory . --output-file coverage.info;
         lcov --remove coverage.info '/usr/*' --output-file coverage.info
