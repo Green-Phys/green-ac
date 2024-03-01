@@ -18,8 +18,17 @@
 # Copyright (c) 2015 Jack Poulson, <jack.poulson@gmail.com>
 # Redistribution and use is allowed according to the terms of the BSD license.
 
-find_path(GMP_INCLUDES NAMES gmp.h PATHS $ENV{GMPDIR}
-        ${INCLUDE_INSTALL_DIR} PATH_SUFFIXES include)
+set(gmp_ver_file "gmp.h")
+
+if ( DEFINED ENV{GMP_DIR} )
+    find_path(GMP_INCLUDES NAMES gmp.h PATHS $ENV{GMP_DIR} PATH_SUFFIXES include NO_DEFAULT_PATH)
+else()
+    find_path(GMP_INCLUDES NAMES gmp.h PATHS $ENV{GMP_DIR} ${INCLUDE_INSTALL_DIR} PATH_SUFFIXES include)
+    find_path(GMP_X86_INCLUDES NAMES gmp-x86_64.h PATHS $ENV{GMP_DIR} ${INCLUDE_INSTALL_DIR} PATH_SUFFIXES include)
+    if ( GMP_X86_INCLUDES ) # Check for redhat wrappers
+        set(gmp_ver_file "gmp-x86_64.h")
+    endif ()
+endif()
 
 # Set GMP_FIND_VERSION to 6.0.0 if no minimum version is specified
 if(NOT GMP_FIND_VERSION)
@@ -37,8 +46,8 @@ if(NOT GMP_FIND_VERSION)
 endif()
 
 if(GMP_INCLUDES)
-    # Query MPFR_VERSION
-    file(READ "${GMP_INCLUDES}/gmp.h" _gmp_version_header)
+    # Query GMP_VERSION
+    file(READ "${GMP_INCLUDES}/${gmp_ver_file}" _gmp_version_header)
 
     string(REGEX MATCH "define[ \t]+__GNU_MP_VERSION[ \t]+([0-9]+)"
             _gmp_major_version_match "${_gmp_version_header}")
@@ -63,8 +72,13 @@ if(GMP_INCLUDES)
     endif()
 endif()
 
-find_library(GMP_LIBRARIES gmp PATHS $ENV{GMPDIR} ${LIB_INSTALL_DIR} PATH_SUFFIXES lib)
-find_library(GMPXX_LIBRARIES gmpxx PATHS $ENV{GMPDIR} ${LIB_INSTALL_DIR} PATH_SUFFIXES lib)
+if ( DEFINED ENV{GMP_DIR} )
+    find_library(GMP_LIBRARIES gmp PATHS $ENV{GMP_DIR} PATH_SUFFIXES lib NO_DEFAULT_PATH)
+    find_library(GMPXX_LIBRARIES gmpxx PATHS $ENV{GMP_DIR} PATH_SUFFIXES lib NO_DEFAULT_PATH)
+else ()
+    find_library(GMP_LIBRARIES gmp PATHS $ENV{GMP_DIR} ${LIB_INSTALL_DIR}  PATH_SUFFIXES lib)
+    find_library(GMPXX_LIBRARIES gmpxx PATHS $ENV{GMP_DIR} ${LIB_INSTALL_DIR}  PATH_SUFFIXES lib)
+endif()
 
 if( NOT GMP_LIBRARIES OR NOT GMPXX_LIBRARIES )
     message(FATAL "GMP Libraries has not been found. Please set GMPDIR environment variable to the location of the GMP library.")
