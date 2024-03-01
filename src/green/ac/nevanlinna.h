@@ -19,23 +19,23 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef AC_NEVANLINNA_H
-#define AC_NEVANLINNA_H
+#ifndef GREEN_AC_NEVANLINNA_H
+#define GREEN_AC_NEVANLINNA_H
 
 #include <green/ndarray/ndarray.h>
 
 #include <Eigen/Dense>
 #include <complex>
 
-#include "mpfr_float.h"
+#include "gmp_float.h"
 
 namespace green::ac::nevanlinna {
 
   class nevanlinna_solver {
   public:
-    using real_t    = mpfr_float;
+    using real_t    = gmp_float;
     using complex_t = std::complex<real_t>;
-    using matrix_t  = Eigen::Matrix<complex_t, Eigen::Dynamic, Eigen::Dynamic>;
+    using matrix_t  = Eigen::Matrix<complex_t, 2, 2>;
     /**
      * Build Nevanlinna factorization for data defined on positive Matsubara mesh
      *
@@ -65,7 +65,7 @@ namespace green::ac::nevanlinna {
 
   class nevanlinna {
   public:
-    nevanlinna()  = default;
+     nevanlinna() = default;
     ~nevanlinna() = default;
 
     // Copy/Move construction
@@ -97,4 +97,4 @@ namespace green::ac::nevanlinna {
   };
 
 }  // namespace green::ac::nevanlinna
-#endif  // AC_NEVANLINNA_H
+#endif  // GREEN_AC_NEVANLINNA_H

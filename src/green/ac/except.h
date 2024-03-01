@@ -19,8 +19,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef AC_EXCEPT_H
-#define AC_EXCEPT_H
+#ifndef GREEN_AC_EXCEPT_H
+#define GREEN_AC_EXCEPT_H
 
 #include <stdexcept>
 
@@ -43,4 +43,4 @@ namespace green::ac {
   };
 }  // namespace green::ac
 
-#endif  // AC_EXCEPT_H
+#endif  // GREEN_AC_EXCEPT_H

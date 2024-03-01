@@ -32,10 +32,11 @@ namespace green::ac::nevanlinna {
     std::transform(data.begin(), data.end(), mdata.begin(),
                    [I](const std::complex<double>& d) { return complex_t(-d - I) / complex_t(-d + I); });
     return mdata;
-  } // LCOV_EXCL_LINE
+  }  // LCOV_EXCL_LINE
 
   void nevanlinna_solver::build(const std::vector<std::complex<double>>& mesh, const std::vector<std::complex<double>>& data) {
     assert(mesh.size() == data.size());
+    mpf_set_default_prec(256);
     if (std::any_of(mesh.begin(), mesh.end(), [](const std::complex<double>& v) { return v.real() != 0.0 or v.imag() < 0; })) {
       throw ac_nevanlinna_error("Data should be defined on the positive Matsubara frequencies.");
     }
@@ -56,7 +57,9 @@ namespace green::ac::nevanlinna {
             std::conj(_phis[j]) * (_mesh[k] - _mesh[j]) / (_mesh[k] - std::conj(_mesh[j])), complex_t{1., 0.};
         _abcds[k] *= prod;
       }
-      _phis[j + 1] = (-_abcds[j + 1](1, 1) * mdata[j + 1] + _abcds[j + 1](0, 1)) /
+      std::complex<real_t> x = (-_abcds[j + 1](1, 1) * mdata[j + 1] + _abcds[j + 1](0, 1));
+      std::complex<real_t> y = (_abcds[j + 1](1, 0) * mdata[j + 1] - _abcds[j + 1](0, 0));
+      _phis[j + 1]           = (-_abcds[j + 1](1, 1) * mdata[j + 1] + _abcds[j + 1](0, 1)) /
                      (_abcds[j + 1](1, 0) * mdata[j + 1] - _abcds[j + 1](0, 0));
     }
   }
@@ -68,8 +71,7 @@ namespace green::ac::nevanlinna {
     }
     if (grid.size() == _grid.size() &&
         std::equal(grid.begin(), grid.end(), _grid.begin(), [](const std::complex<double>& w1, const complex_t& w2) {
-          return std::abs(w1.real() - w2.real().convert_to<double>()) < 1e-9 &&
-                 std::abs(w1.imag() - w2.imag().convert_to<double>()) < 1e-9;
+          return std::abs(w1.real() - to_double(w2.real())) < 1e-9 && std::abs(w1.imag() - to_double(w2.imag())) < 1e-9;
         })) {
       return evaluate_internal(grid);
     }
@@ -86,10 +88,10 @@ namespace green::ac::nevanlinna {
       matrix_t result = matrix_t::Identity(2, 2);
       auto     z      = _grid[i];
       for (int j = 0; j < M; j++) {
-        prod(0,0) = (z - _mesh[j]) / (z - std::conj(_mesh[j]));
-        prod(0,1) = _phis[j];
-        prod(1,0) = std::conj(_phis[j]) * ((z - _mesh[j]) / (z - std::conj(_mesh[j])));
-        prod(1,1) = One;
+        prod(0, 0) = (z - _mesh[j]) / (z - std::conj(_mesh[j]));
+        prod(0, 1) = _phis[j];
+        prod(1, 0) = std::conj(_phis[j]) * ((z - _mesh[j]) / (z - std::conj(_mesh[j])));
+        prod(1, 1) = One;
         // prod << (z - _mesh[j]) / (z - std::conj(_mesh[j])), _phis[j],
         //     std::conj(_phis[j]) * ((z - _mesh[j]) / (z - std::conj(_mesh[j]))), One;
         result *= prod;
@@ -98,8 +100,8 @@ namespace green::ac::nevanlinna {
       complex_t param{0., 0.};
       complex_t theta = (result(0, 0) * param + result(0, 1)) / (result(1, 0) * param + result(1, 1));
       complex_t value = I * (One + theta) / (One - theta);
-      results[i]      = -std::complex<double>(value.real().convert_to<double>(),
-                                         value.imag().convert_to<double>());  // inverse Mobius transform from theta to NG
+      results[i]      = -std::complex<double>(to_double(value.real()),
+                                         to_double(value.imag()));  // inverse Mobius transform from theta to NG
     }
     return results;
   }
@@ -116,7 +118,7 @@ namespace green::ac::nevanlinna {
       complex_t theta          = (result(0, 0) * theta_M_plus_1 + result(0, 1)) / (result(1, 0) * theta_M_plus_1 + result(1, 1));
       complex_t value          = I * (One + theta) / (One - theta);
       // inverse Mobius transform from theta to NG
-      results[i] = -std::complex<double>(value.real().convert_to<double>(), value.imag().convert_to<double>());
+      results[i] = -std::complex<double>(to_double(value.real()), to_double(value.imag()));
     }
     return results;
   }
@@ -151,5 +153,5 @@ namespace green::ac::nevanlinna {
       }
     }
     return results;
-  } // LCOV_EXCL_LINE
+  }  // LCOV_EXCL_LINE
 }  // namespace green::ac::nevanlinna

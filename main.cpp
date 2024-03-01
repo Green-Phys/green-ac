@@ -35,6 +35,7 @@ void define_parameters(green::params::params& p) {
   p.define<std::string>("group", "Name of the HDF5 group in the input file, that contains imaginary time data.");
   p.define<int>("nk", "K-point to continue, continue all if nk=-1", -1);
   p.define<int>("n_omega", "Number of real frequency points", 1000);
+  p.define<int>("precision", "Number bit in multiprecision representation", 128);
   p.define<double>("e_min", "Smallest frequency point", -5);
   p.define<double>("e_max", "Largest frequency point", 5);
   p.define<double>("eta", "Lorentzian broadening", 0.1);
@@ -83,6 +84,7 @@ void read_nevanlinna_data(const green::params::params& p, const green::grids::tr
 }
 
 void run_nevanlinna(const green::params::params& p) {
+  mpf_set_default_prec(p["precision"].as<int>());
   green::grids::transformer_t                      tr(p);
   green::ndarray::ndarray<std::complex<double>, 4> data;
   green::ndarray::ndarray<std::complex<double>, 4> data_out;
@@ -110,16 +112,16 @@ void run_nevanlinna(const green::params::params& p) {
     size_t                                           i  = iski % nao;
     size_t                                           ik = ((iski / nao) % nk) + k_shift;
     size_t                                           is = iski / nao / nk;
-    green::ndarray::ndarray<std::complex<double>, 2> inp_t(data.shape()[0], data.shape()[3]);
-    green::ndarray::ndarray<std::complex<double>, 2> inp_w(tr.sd().repn_fermi().nw(), data.shape()[3]);
+    green::ndarray::ndarray<std::complex<double>, 2> inp_t(data.shape()[0], 1);
+    green::ndarray::ndarray<std::complex<double>, 2> inp_w(tr.sd().repn_fermi().nw(), 1);
     for (size_t it = 0; it < data.shape()[0]; ++it) {
-      inp_t(it, i) = data(it, is, ik, i);
+      inp_t(it, 0) = data(it, is, ik, i);
     }
     tr.tau_to_omega(inp_t, inp_w);
     ac.solve(iwgrid, inp_w);
     auto out_w = ac.evaluate(wgrid);
     for (size_t iw = 0; iw < out_w.shape()[0]; ++iw) {
-      data_out(iw, is, ik - k_shift, i) = out_w(iw, i);
+      data_out(iw, is, ik - k_shift, i) = out_w(iw, 0);
     }
     std::cout << "Continuation " + std::to_string(iski) + " out of " + std::to_string(nk * ns * nao) + " finished." << std::endl;
   }
@@ -150,12 +152,11 @@ int main(int argc, char** argv) {
     if (!green::utils::context.global_rank) p.help();
     MPI_Finalize();
     return -1;
-  } else {
-    if (!green::utils::context.global_rank) p.print();
   }
+  if (!green::utils::context.global_rank) p.print();
 
   try {
-    switch (green::ac::AC_KIND(p["kind"])) {
+    switch (p["kind"].as<green::ac::AC_KIND>()) {
       case green::ac::Nevanlinna:
         run_nevanlinna(p);
         break;

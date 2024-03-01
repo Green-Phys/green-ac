@@ -19,8 +19,8 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef AC_COMMON_DEFS_H
-#define AC_COMMON_DEFS_H
+#ifndef GREEN_AC_COMMON_DEFS_H
+#define GREEN_AC_COMMON_DEFS_H
 
 namespace green::ac {
   enum AC_KIND {
@@ -28,4 +28,4 @@ namespace green::ac {
   };
 }
 
-#endif  // AC_COMMON_DEFS_H
+#endif  // GREEN_AC_COMMON_DEFS_H

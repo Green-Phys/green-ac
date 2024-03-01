@@ -12,7 +12,7 @@ FetchContent_MakeAvailable(Catch2)
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 
 add_executable(ac_test ac_test.cpp
-        mpfr_float_test.cpp)
+        gmp_float_test.cpp)
 target_link_libraries(ac_test
         PRIVATE
         Catch2::Catch2WithMain
