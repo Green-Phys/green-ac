@@ -94,6 +94,12 @@ TEST_CASE("MPFR Complex") {
     a -= std::complex{2., 3.};
     REQUIRE(std::abs(to_double(a.real() - 1.0)) < 1e-12);
     REQUIRE(std::abs(to_double(a.imag())) < 1e-12);
+    a *= std::complex{2., 3.};
+    REQUIRE(std::abs(to_double(a.real() - 2.0)) < 1e-12);
+    REQUIRE(std::abs(to_double(a.imag() - 3.0)) < 1e-12);
+    a /= std::complex{2., 3.};
+    REQUIRE(std::abs(to_double(a.real() - 1.0)) < 1e-12);
+    REQUIRE(std::abs(to_double(a.imag())) < 1e-12);
   }
   SECTION("Math") {
     std::complex a(gmp_float(1), gmp_float(1));
@@ -121,6 +127,16 @@ TEST_CASE("MPFR Complex") {
     REQUIRE(b == std::complex(2., 2.));
     b /= 4.0;
     REQUIRE(b == std::complex(0.5, 0.5));
+
+    gmp_float d(3.0);
+    a += d;
+    REQUIRE(a == std::complex(8., 3.));
+    a -= d;
+    REQUIRE(a == std::complex(5., 3.));
+    a *= d;
+    REQUIRE(a == std::complex(15., 9.));
+    a /= d;
+    REQUIRE(a == std::complex(5., 3.));
 
     REQUIRE(a.real() == std::real(a));
     REQUIRE(a.imag() == std::imag(a));

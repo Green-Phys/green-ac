@@ -270,7 +270,7 @@ namespace std {
     std::complex<green::ac::gmp_float> r(x);
     r += y;
     return r;
-  }
+  } // LCOV_EXCL_LINE
 
   inline auto operator-(const complex<green::ac::gmp_float>& x, const complex<green::ac::gmp_float>& y) {
     const green::ac::gmp_float&        a = x.real();
@@ -280,7 +280,7 @@ namespace std {
     std::complex<green::ac::gmp_float> r(x);
     r -= y;
     return r;
-  }
+  } // LCOV_EXCL_LINE
 
   inline complex<green::ac::gmp_float> conj(const complex<green::ac::gmp_float>& x) {
     return complex<green::ac::gmp_float>(x.real(), -x.imag());
