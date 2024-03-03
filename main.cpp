@@ -84,7 +84,6 @@ void read_nevanlinna_data(const green::params::params& p, const green::grids::tr
 }
 
 void run_nevanlinna(const green::params::params& p) {
-  mpf_set_default_prec(p["precision"].as<int>());
   green::grids::transformer_t                      tr(p);
   green::ndarray::ndarray<std::complex<double>, 4> data;
   green::ndarray::ndarray<std::complex<double>, 4> data_out;
@@ -98,13 +97,12 @@ void run_nevanlinna(const green::params::params& p) {
   size_t ns = data.shape()[1];
   size_t nw = p["n_omega"];
   data_out.resize(std::array<size_t, 4>{nw, data.shape()[1], nk, data.shape()[3]});
-  auto                              iwgrid = tr.sd().repn_fermi().wsample() * std::complex<double>(0, 1);
-  std::vector<std::complex<double>> wgrid(nw);
+  auto                                             iwgrid = tr.sd().repn_fermi().wsample() * std::complex<double>(0, 1);
+  green::ndarray::ndarray<std::complex<double>, 1> wgrid(nw);
   for (size_t iw = 0; iw < wgrid.size(); ++iw) {
-    wgrid[iw] = double(p["e_min"]) + (double(p["e_max"]) - double(p["e_min"])) * double(iw) / double(wgrid.size() - 1) +
+    wgrid(iw) = double(p["e_min"]) + (double(p["e_max"]) - double(p["e_min"])) * double(iw) / double(wgrid.size()) +
                 std::complex<double>(0.0, p["eta"]);
   }
-  green::ac::nevanlinna::nevanlinna ac;
   if (!green::utils::context.global_rank) {
     std::cout << "Performing " + std::to_string(nk * ns * nao) + " continuations." << std::endl;
   }
@@ -112,16 +110,17 @@ void run_nevanlinna(const green::params::params& p) {
     size_t                                           i  = iski % nao;
     size_t                                           ik = ((iski / nao) % nk) + k_shift;
     size_t                                           is = iski / nao / nk;
-    green::ndarray::ndarray<std::complex<double>, 2> inp_t(data.shape()[0], 1);
-    green::ndarray::ndarray<std::complex<double>, 2> inp_w(tr.sd().repn_fermi().nw(), 1);
+    green::ndarray::ndarray<std::complex<double>, 1> inp_t(data.shape()[0]);
+    green::ndarray::ndarray<std::complex<double>, 1> inp_w(tr.sd().repn_fermi().nw());
     for (size_t it = 0; it < data.shape()[0]; ++it) {
-      inp_t(it, 0) = data(it, is, ik, i);
+      inp_t(it) = data(it, is, ik, i);
     }
     tr.tau_to_omega(inp_t, inp_w);
+    green::ac::nevanlinna::nevanlinna ac(p["precision"].as<int>());
     ac.solve(iwgrid, inp_w);
     auto out_w = ac.evaluate(wgrid);
     for (size_t iw = 0; iw < out_w.shape()[0]; ++iw) {
-      data_out(iw, is, ik - k_shift, i) = out_w(iw, 0);
+      data_out(iw, is, ik - k_shift, i) = out_w(iw);
     }
     std::cout << "Continuation " + std::to_string(iski) + " out of " + std::to_string(nk * ns * nao) + " finished." << std::endl;
   }

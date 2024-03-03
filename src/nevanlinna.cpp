@@ -21,12 +21,12 @@
 
 #include "green/ac/nevanlinna.h"
 
-#include "green/ac/except.h"
+#include <fstream>
 
+#include "green/ac/except.h"
 namespace green::ac::nevanlinna {
 
-  std::vector<nevanlinna_solver::complex_t> nevanlinna_solver::mobius_trasformation(
-      const std::vector<std::complex<double>>& data) const {
+  std::vector<nevanlinna::complex_t> nevanlinna::mobius_trasformation(const array_t& data) const {
     std::vector<complex_t> mdata(data.size());
     std::complex           I{0.0, 1.0};
     std::transform(data.begin(), data.end(), mdata.begin(),
@@ -34,9 +34,9 @@ namespace green::ac::nevanlinna {
     return mdata;
   }  // LCOV_EXCL_LINE
 
-  void nevanlinna_solver::build(const std::vector<std::complex<double>>& mesh, const std::vector<std::complex<double>>& data) {
+  void nevanlinna::build(const array_t& mesh, const array_t& data) {
     assert(mesh.size() == data.size());
-    mpf_set_default_prec(256);
+    mpf_set_default_prec(_precision);
     if (std::any_of(mesh.begin(), mesh.end(), [](const std::complex<double>& v) { return v.real() != 0.0 or v.imag() < 0; })) {
       throw ac_nevanlinna_error("Data should be defined on the positive Matsubara frequencies.");
     }
@@ -45,11 +45,13 @@ namespace green::ac::nevanlinna {
     _abcds.resize(M);
     _mesh.resize(M);
     auto mdata = mobius_trasformation(data);
-    _phis[0]   = mdata[0];
     for (int k = 0; k < M; k++) {
       _abcds[k] = matrix_t::Identity(2, 2);
-      _mesh[k]  = mesh[k];
+      _mesh[k]  = mesh(k);
     }
+    std::reverse(mdata.begin(), mdata.end());
+    std::reverse(_mesh.begin(), _mesh.end());
+    _phis[0]   = mdata[0];
     matrix_t prod(2, 2);
     for (int j = 0; j < M - 1; j++) {
       for (int k = j; k < M; k++) {
@@ -57,14 +59,13 @@ namespace green::ac::nevanlinna {
             std::conj(_phis[j]) * (_mesh[k] - _mesh[j]) / (_mesh[k] - std::conj(_mesh[j])), complex_t{1., 0.};
         _abcds[k] *= prod;
       }
-      std::complex<real_t> x = (-_abcds[j + 1](1, 1) * mdata[j + 1] + _abcds[j + 1](0, 1));
-      std::complex<real_t> y = (_abcds[j + 1](1, 0) * mdata[j + 1] - _abcds[j + 1](0, 0));
-      _phis[j + 1]           = (-_abcds[j + 1](1, 1) * mdata[j + 1] + _abcds[j + 1](0, 1)) /
+      _phis[j + 1] = (-_abcds[j + 1](1, 1) * mdata[j + 1] + _abcds[j + 1](0, 1)) /
                      (_abcds[j + 1](1, 0) * mdata[j + 1] - _abcds[j + 1](0, 0));
     }
   }
 
-  std::vector<std::complex<double>> nevanlinna_solver::evaluate(const std::vector<std::complex<double>>& grid) {
+  nevanlinna::array_t nevanlinna::evaluate(const array_t& grid) {
+    mpf_set_default_prec(_precision);
     size_t M = _phis.size();
     if (M == 0) {
       throw ac_nevanlinna_error("Empty continuation data. Please run solve(...) first.");
@@ -80,10 +81,10 @@ namespace green::ac::nevanlinna {
     std::transform(grid.begin(), grid.end(), _grid.begin(), [](const std::complex<double>& w) {
       return complex_t{w.real(), w.imag()};
     });
-    complex_t                         I{0., 1.};
-    complex_t                         One{1., 0.};
-    std::vector<std::complex<double>> results(grid.size());
-    matrix_t                          prod(2, 2);
+    complex_t     I{0., 1.};
+    complex_t     One{1., 0.};
+    array_t       results(grid.size());
+    matrix_t      prod(2, 2);
     for (int i = 0; i < grid.size(); ++i) {
       matrix_t result = matrix_t::Identity(2, 2);
       auto     z      = _grid[i];
@@ -99,17 +100,17 @@ namespace green::ac::nevanlinna {
       _coeffs[i] = result;
       complex_t param{0., 0.};
       complex_t theta = (result(0, 0) * param + result(0, 1)) / (result(1, 0) * param + result(1, 1));
+      // inverse Mobius transform from theta to NG
       complex_t value = I * (One + theta) / (One - theta);
-      results[i]      = -std::complex<double>(to_double(value.real()),
-                                         to_double(value.imag()));  // inverse Mobius transform from theta to NG
+      results(i)      = -std::complex<double>(to_double(value.real()), to_double(value.imag()));
     }
     return results;
   }
 
-  std::vector<std::complex<double>> nevanlinna_solver::evaluate_internal(const std::vector<std::complex<double>>& grid) const {
-    complex_t                         I{0., 1.};
-    complex_t                         One{1., 0.};
-    std::vector<std::complex<double>> results(grid.size());
+  nevanlinna::array_t nevanlinna::evaluate_internal(const array_t& grid) const {
+    complex_t I{0., 1.};
+    complex_t One{1., 0.};
+    array_t   results(grid.size());
     for (int i = 0; i < _grid.size(); ++i) {
       matrix_t  result         = _coeffs[i];
       auto      z              = _grid[i];
@@ -118,40 +119,22 @@ namespace green::ac::nevanlinna {
       complex_t theta          = (result(0, 0) * theta_M_plus_1 + result(0, 1)) / (result(1, 0) * theta_M_plus_1 + result(1, 1));
       complex_t value          = I * (One + theta) / (One - theta);
       // inverse Mobius transform from theta to NG
-      results[i] = -std::complex<double>(to_double(value.real()), to_double(value.imag()));
+      results(i) = -std::complex<double>(to_double(value.real()), to_double(value.imag()));
     }
     return results;
   }
 
-  void nevanlinna::solve(const ndarray::ndarray<std::complex<double>, 1>& mesh,
-                         const ndarray::ndarray<std::complex<double>, 2>& data) {
-    _solvers.clear();
-    size_t N  = data.shape()[1];
-    size_t nw = std::count_if(mesh.begin(), mesh.end(), [](const std::complex<double>& w) { return w.imag() > 0; });
-    std::vector<std::complex<double>> data_in(nw);
-    std::vector<std::complex<double>> mesh_in(nw);
-    for (size_t n = 0; n < N; ++n) {
-      for (size_t iw = 0, iww = 0; iw < mesh.shape()[0]; ++iw) {
-        if (mesh(iw).imag() < 0) continue;
-        data_in[iww] = data(iw, n);
-        mesh_in[iww] = mesh(iw);
-        ++iww;
-      }
-      nevanlinna_solver f;
-      f.build(mesh_in, data_in);
-      _solvers.push_back(f);
+  void nevanlinna::solve(const array_t& mesh, const array_t& data) {
+    size_t  nw = std::count_if(mesh.begin(), mesh.end(), [](const std::complex<double>& w) { return w.imag() > 0; });
+    array_t data_in(nw);
+    array_t mesh_in(nw);
+    // for (int64_t iw = mesh.shape()[0] - 1, iww = 0; iw >= 0; --iw) {
+    for (int64_t iw = 0, iww = 0; iw < mesh.shape()[0]; ++iw) {
+      if (mesh(iw).imag() < 0) continue;
+      data_in(iww) = data(iw);
+      mesh_in(iww) = mesh(iw);
+      ++iww;
     }
+    build(mesh_in, data_in);
   }
-
-  ndarray::ndarray<std::complex<double>, 2> nevanlinna::evaluate(std::vector<std::complex<double>>& grid) {
-    size_t                                    size = _solvers.size();
-    ndarray::ndarray<std::complex<double>, 2> results(grid.size(), size);
-    for (size_t n = 0; n < size; ++n) {
-      std::vector<std::complex<double>> data = _solvers[n].evaluate(grid);
-      for (size_t iw = 0; iw < grid.size(); ++iw) {
-        results(iw, n) = data[iw];
-      }
-    }
-    return results;
-  }  // LCOV_EXCL_LINE
 }  // namespace green::ac::nevanlinna

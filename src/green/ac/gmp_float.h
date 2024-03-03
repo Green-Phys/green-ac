@@ -32,7 +32,7 @@ namespace green::ac {
 
   using gmp_float = mpf_class;
 
-  namespace type_traits {
+  namespace gmp::type_traits {
     template <typename T>
     using convertible_t = std::enable_if_t<!std::is_same_v<std::decay_t<T>, gmp_float> && std::is_arithmetic_v<T>, gmp_float>;
     template <typename T>
@@ -59,7 +59,7 @@ namespace std {
     using real_t = green::ac::gmp_float;
 
   public:
-             complex() : _real(real_t(0)), _imag(real_t(0)) {}
+             complex() : _real(real_t(0, 500)), _imag(real_t(0, 500)) {}
              complex(const real_t& real, const real_t& imag) : _real(real), _imag(imag) {}
              complex(real_t&& real, real_t&& imag) : _real(real), _imag(imag) {}
              complex(const real_t& real) : _real(real), _imag(real_t(0)) {}
@@ -76,124 +76,124 @@ namespace std {
     complex& operator=(complex&& rhs)      = default;
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_gmp_scalar<S>, complex>& operator-=(const std::complex<S>& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_gmp_scalar<S>, complex>& operator-=(const std::complex<S>& rhs) {
       _real -= rhs.real();
       _imag -= rhs.imag();
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_gmp_scalar<S>, complex>& operator+=(const std::complex<S>& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_gmp_scalar<S>, complex>& operator+=(const std::complex<S>& rhs) {
       _real += rhs.real();
       _imag += rhs.imag();
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_gmp_scalar<S>, complex>& operator*=(const std::complex<S>& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_gmp_scalar<S>, complex>& operator*=(const std::complex<S>& rhs) {
       *this = *this * rhs;
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_gmp_scalar<S>, complex>& operator/=(const std::complex<S>& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_gmp_scalar<S>, complex>& operator/=(const std::complex<S>& rhs) {
       *this = *this / rhs;
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_gmp_scalar<S>, complex>& operator-=(const S& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_gmp_scalar<S>, complex>& operator-=(const S& rhs) {
       _real -= rhs;
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_gmp_scalar<S>, complex>& operator+=(const S& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_gmp_scalar<S>, complex>& operator+=(const S& rhs) {
       _real += rhs;
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_gmp_scalar<S>, complex>& operator*=(const S& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_gmp_scalar<S>, complex>& operator*=(const S& rhs) {
       _real *= rhs;
       _imag *= rhs;
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_gmp_scalar<S>, complex>& operator/=(const S& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_gmp_scalar<S>, complex>& operator/=(const S& rhs) {
       _real /= rhs;
       _imag /= rhs;
       return *this;
     }
 
     template <typename S>
-    complex(const std::enable_if_t<std::is_arithmetic_v<S>, S>& real) : _real(real_t(real)), _imag(real_t(0)) {}
+    complex(const std::enable_if_t<std::is_arithmetic_v<S>, S>& real) : _real(real_t(real), 500), _imag(real_t(0), 500) {}
 
     template <typename S>
     complex(const std::complex<S>& cplx) :
-        _real(green::ac::type_traits::convertible_t<S>(cplx.real())), _imag(real_t(cplx.imag())) {}
+        _real(green::ac::gmp::type_traits::convertible_t<S>(cplx.real(), 500)), _imag(real_t(cplx.imag(), 500)) {}
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_scalar<S>, complex>& operator=(const S& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_scalar<S>, complex>& operator=(const S& rhs) {
       _real = real_t(rhs);
       _imag = real_t(0);
       return *this;
     }
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_scalar<S>, complex>& operator=(const std::complex<S>& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_scalar<S>, complex>& operator=(const std::complex<S>& rhs) {
       _real = real_t(rhs.real());
       _imag = real_t(rhs.imag());
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_scalar<S>, complex>& operator-=(const complex<S>& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_scalar<S>, complex>& operator-=(const complex<S>& rhs) {
       _real -= real_t(rhs.real());
       _imag -= real_t(rhs.imag());
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_scalar<S>, complex>& operator+=(const complex<S>& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_scalar<S>, complex>& operator+=(const complex<S>& rhs) {
       _real += real_t(rhs.real());
       _imag += real_t(rhs.imag());
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_scalar<S>, complex>& operator*=(const complex<S>& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_scalar<S>, complex>& operator*=(const complex<S>& rhs) {
       *this = *this * rhs;
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_scalar<S>, complex>& operator/=(const complex<S>& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_scalar<S>, complex>& operator/=(const complex<S>& rhs) {
       *this = *this / rhs;
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_scalar<S>, complex>& operator-=(const S& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_scalar<S>, complex>& operator-=(const S& rhs) {
       _real -= real_t(rhs);
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_scalar<S>, complex>& operator+=(const S& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_scalar<S>, complex>& operator+=(const S& rhs) {
       _real += real_t(rhs);
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_scalar<S>, complex>& operator*=(const S& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_scalar<S>, complex>& operator*=(const S& rhs) {
       _real *= real_t(rhs);
       _imag *= real_t(rhs);
       return *this;
     }
 
     template <typename S>
-    std::enable_if_t<green::ac::type_traits::is_scalar<S>, complex>& operator/=(const S& rhs) {
+    std::enable_if_t<green::ac::gmp::type_traits::is_scalar<S>, complex>& operator/=(const S& rhs) {
       _real /= real_t(rhs);
       _imag /= real_t(rhs);
       return *this;

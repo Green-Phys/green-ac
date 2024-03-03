@@ -30,43 +30,25 @@
 #include "gmp_float.h"
 
 namespace green::ac::nevanlinna {
-
-  class nevanlinna_solver {
-  public:
-    using real_t    = gmp_float;
-    using complex_t = std::complex<real_t>;
-    using matrix_t  = Eigen::Matrix<complex_t, 2, 2>;
-    /**
-     * Build Nevanlinna factorization for data defined on positive Matsubara mesh
-     *
-     * @param mesh - Matsubara frequency mesh
-     * @param data - Matsubara frequency data
-     */
-    void build(const std::vector<std::complex<double>>& mesh, const std::vector<std::complex<double>>& data);
-
-    /**
-     * Evaluate Nevanlinna continuation on a complex-valued grid
-     * @param grid - grid for continuation evaluation
-     * @return Nevanlinna continuation on the specified grid
-     */
-    [[nodiscard]] std::vector<std::complex<double>> evaluate(const std::vector<std::complex<double>>& grid);
-
-  private:
-    std::vector<complex_t>                          _phis;
-    std::vector<matrix_t>                           _abcds;
-    std::vector<complex_t>                          _mesh;
-    std::vector<complex_t>                          _grid;
-    std::vector<matrix_t>                           _coeffs;
-
-    [[nodiscard]] std::vector<complex_t>            mobius_trasformation(const std::vector<std::complex<double>>& data) const;
-
-    [[nodiscard]] std::vector<std::complex<double>> evaluate_internal(const std::vector<std::complex<double>>& grid) const;
-  };
+  // convert number to string with n precision
+  template <typename T>
+  std::string to_string_p(const T a_value, const int n = 80) {
+    std::ostringstream out;
+    out.precision(n);
+    out << std::fixed << a_value;
+    return out.str();
+  }
 
   class nevanlinna {
   public:
-     nevanlinna() = default;
-    ~nevanlinna() = default;
+    using real_t          = gmp_float;
+    using complex_t       = std::complex<real_t>;
+    using matrix_t        = Eigen::Matrix<complex_t, Eigen::Dynamic, Eigen::Dynamic>;
+    using array_t         = ndarray::ndarray<std::complex<double>, 1>;
+
+             nevanlinna() = default;
+    explicit nevanlinna(int precision) : _precision(precision) {}
+    ~        nevanlinna() = default;
 
     // Copy/Move construction
     nevanlinna(nevanlinna const&) = default;
@@ -82,7 +64,7 @@ namespace green::ac::nevanlinna {
      * \param mesh - imaginary frequency mesh
      * \param data - data in imaginary frequency domain
      */
-    void solve(const ndarray::ndarray<std::complex<double>, 1>& mesh, const ndarray::ndarray<std::complex<double>, 2>& data);
+    void solve(const array_t& mesh, const array_t& data);
 
     /**
      * \brief Evaluate analytical continuation of imagiary frequency data using Nevanlinna method
@@ -90,10 +72,20 @@ namespace green::ac::nevanlinna {
      * \param grid real frequency grid
      * \return analytically conrtinued data on a chosen real frequency grid
      */
-    [[nodiscard]] ndarray::ndarray<std::complex<double>, 2> evaluate(std::vector<std::complex<double>>& grid);
+    [[nodiscard]] array_t evaluate(const array_t& grid);
+
+    void                  build(const array_t& mesh, const array_t& data);
 
   private:
-    std::vector<nevanlinna_solver> _solvers{};
+    int                                  _precision{};
+    std::vector<complex_t>               _phis;
+    std::vector<matrix_t>                _abcds;
+    std::vector<complex_t>               _mesh;
+    std::vector<complex_t>               _grid;
+    std::vector<matrix_t>                _coeffs;
+
+    [[nodiscard]] std::vector<complex_t> mobius_trasformation(const array_t& data) const;
+    [[nodiscard]] array_t                evaluate_internal(const array_t& grid) const;
   };
 
 }  // namespace green::ac::nevanlinna

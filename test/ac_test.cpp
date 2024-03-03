@@ -30,77 +30,74 @@ using namespace green::ac;
 using namespace green::ndarray;
 
 TEST_CASE("Nevanlinna") {
-  const double                      eta       = 0.1;
-  const double                      mu1       = 1.0;
-  const double                      mu2       = 1.0;
-  const double                      beta      = 10.0;
-  const double                      omega_min = -5.0;
-  const double                      omega_max = 5.0;
-  const int                         n_iw      = 100;
-  const int                         n_omega   = 100;
-  nevanlinna::nevanlinna            a;
-  ndarray<std::complex<double>, 2>  im_data(n_iw, 2);
-  ndarray<std::complex<double>, 1>  im_grid(n_iw);
-  ndarray<std::complex<double>, 2>  re_data(n_omega, 2);
-  std::vector<std::complex<double>> re_grid(n_omega);
+  const double                     eta       = 0.1;
+  const double                     mu1       = 1.0;
+  const double                     beta      = 10.0;
+  const double                     omega_min = -5.0;
+  const double                     omega_max = 5.0;
+  const int                        n_iw      = 100;
+  const int                        n_omega   = 100;
+  nevanlinna::nevanlinna           a;
+  ndarray<std::complex<double>, 1> im_data(n_iw);
+  ndarray<std::complex<double>, 1> im_grid(n_iw);
+  ndarray<std::complex<double>, 1> re_data(n_omega);
+  ndarray<std::complex<double>, 1> re_grid(n_omega);
 
   for (int iw = 0, w = -n_iw / 2; iw < n_iw; ++iw, ++w) {
-    im_grid(iw)    = (2 * w + 1) * M_PI * std::complex<double>(0, 1) / beta;
-    im_data(iw, 0) = 1. / (im_grid(iw) - mu1);
-    im_data(iw, 1) = 1. / (im_grid(iw) - mu2);
+    im_grid(iw) = (2 * w + 1) * M_PI * std::complex<double>(0, 1) / beta;
+    im_data(iw) = 1. / (im_grid(iw) - mu1);
   }
 
   for (size_t iw = 0; iw < n_omega; ++iw) {
-    re_grid[iw]    = std::complex<double>(iw * (omega_max - omega_min) / n_omega, eta);
-    re_data(iw, 0) = 1. / (re_grid[iw] - mu1);
-    re_data(iw, 1) = 1. / (re_grid[iw] - mu2);
+    re_grid(iw) = std::complex<double>(iw * (omega_max - omega_min) / n_omega, eta);
+    re_data(iw) = 1. / (re_grid(iw) - mu1);
   }
 
   a.solve(im_grid, im_data);
-  ndarray<std::complex<double>, 2> result = a.evaluate(re_grid);
+  ndarray<std::complex<double>, 1> result = a.evaluate(re_grid);
 
   REQUIRE(std::equal(result.begin(), result.end(), re_data.begin(),
                      [](const std::complex<double>& x, const std::complex<double>& y) { return std::abs(x - y) < 1e-12; }));
 }
 
 TEST_CASE("Nevanlinna Solver") {
-  const double                      eta       = 0.1;
-  const double                      mu        = 1.0;
-  const double                      beta      = 10.0;
-  const double                      omega_min = -5.0;
-  const double                      omega_max = 5.0;
-  const int                         n_iw      = 100;
-  const int                         n_omega   = 100;
-  nevanlinna::nevanlinna_solver     a;
-  std::vector<std::complex<double>> im_data(n_iw);
-  std::vector<std::complex<double>> im_grid(n_iw);
-  std::vector<std::complex<double>> re_data(n_omega);
-  std::vector<std::complex<double>> re_grid(n_omega);
+  const double                     eta       = 0.1;
+  const double                     mu        = 1.0;
+  const double                     beta      = 10.0;
+  const double                     omega_min = -5.0;
+  const double                     omega_max = 5.0;
+  const int                        n_iw      = 100;
+  const int                        n_omega   = 100;
+  nevanlinna::nevanlinna           a;
+  ndarray<std::complex<double>, 1> im_data(n_iw);
+  ndarray<std::complex<double>, 1> im_grid(n_iw);
+  ndarray<std::complex<double>, 1> re_data(n_omega);
+  ndarray<std::complex<double>, 1> re_grid(n_omega);
 
   for (int iw = 0, w = -n_iw / 2; iw < n_iw; ++iw, ++w) {
-    im_grid[iw] = (2 * w + 1) * M_PI * std::complex<double>(0, 1) / beta;
-    im_data[iw] = 1. / (im_grid[iw] - mu);
+    im_grid(iw) = (2 * w + 1) * M_PI * std::complex<double>(0, 1) / beta;
+    im_data(iw) = 1. / (im_grid(iw) - mu);
   }
 
   REQUIRE_THROWS_AS(a.build(im_grid, im_data), ac_nevanlinna_error);
   REQUIRE_THROWS_AS(a.evaluate(re_grid), ac_nevanlinna_error);
 
   for (int iw = 0, w = -n_iw / 2; iw < n_iw; ++iw, ++w) {
-    im_grid[iw] = (2 * iw + 1) * M_PI * std::complex<double>(0, 1) / beta;
-    im_data[iw] = 1. / (im_grid[iw] - mu);
+    im_grid(iw) = (2 * iw + 1) * M_PI * std::complex<double>(0, 1) / beta;
+    im_data(iw) = 1. / (im_grid(iw) - mu);
   }
 
   for (size_t iw = 0; iw < n_omega; ++iw) {
-    re_grid[iw] = std::complex<double>(iw * (omega_max - omega_min) / n_omega, eta);
-    re_data[iw] = 1. / (re_grid[iw] - mu);
+    re_grid(iw) = std::complex<double>(iw * (omega_max - omega_min) / n_omega, eta);
+    re_data(iw) = 1. / (re_grid(iw) - mu);
   }
 
   a.build(im_grid, im_data);
-  std::vector<std::complex<double>> result = a.evaluate(re_grid);
+  ndarray<std::complex<double>, 1> result = a.evaluate(re_grid);
 
   REQUIRE(std::equal(result.begin(), result.end(), re_data.begin(),
                      [](const std::complex<double>& x, const std::complex<double>& y) { return std::abs(x - y) < 1e-12; }));
-  std::vector<std::complex<double>> result2 = a.evaluate(re_grid);
+  ndarray<std::complex<double>, 1> result2 = a.evaluate(re_grid);
   REQUIRE(std::equal(result2.begin(), result2.end(), re_data.begin(),
                      [](const std::complex<double>& x, const std::complex<double>& y) { return std::abs(x - y) < 1e-12; }));
 }
