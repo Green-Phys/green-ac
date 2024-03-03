@@ -22,11 +22,11 @@
 #ifndef GREEN_AC_GMP_FLOAT_H
 #define GREEN_AC_GMP_FLOAT_H
 
+#include <gmpxx.h>
+
 #include <Eigen/Core>
 #include <complex>
 #include <type_traits>
-
-#include <gmpxx.h>
 
 namespace green::ac {
 
@@ -40,15 +40,9 @@ namespace green::ac {
     template <typename T>
     constexpr bool is_gmp_scalar = std::is_same_v<std::decay_t<T>, gmp_float> /* || std::is_arithmetic_v<T>*/;
 
-  }  // namespace type_traits
+  }  // namespace gmp::type_traits
 
-  inline double to_double(const gmp_float& v) {return v.get_d();}
-
-  // inline gmp_float sqrt(const gmp_float& rhs) {
-  //   gmp_float res(0.0);
-  //   mpf_sqrt(res, rhs);
-  //   return sqrt(rhs);
-  // }
+  inline double to_double(const gmp_float& v) { return v.get_d(); }
 
 }  // namespace green::ac
 
@@ -228,17 +222,17 @@ namespace std {
     return x == y.real() && green::ac::gmp_float(0) == y.imag();
   }
 
-  template<typename S>
+  template <typename S>
   std::enable_if_t<is_arithmetic_v<S>, bool> operator==(const complex<green::ac::gmp_float>& x, const complex<S>& y) {
     return abs(x.real() - green::ac::gmp_float(y.real())) < 1e-12 && abs(x.imag() - green::ac::gmp_float(y.imag())) < 1e-12;
   }
 
-  template<typename S>
+  template <typename S>
   std::enable_if_t<is_arithmetic_v<S>, bool> operator==(const complex<green::ac::gmp_float>& x, S y) {
     return abs(x.real() - green::ac::gmp_float(y)) < 1e-12 && x.imag() == 0;
   }
 
-  template<typename S>
+  template <typename S>
   std::enable_if_t<is_arithmetic_v<S>, bool> operator==(const S& y, const complex<green::ac::gmp_float>& x) {
     return abs(x.real() - green::ac::gmp_float(y)) < 1e-12 && x.imag() == 0;
   }
@@ -270,7 +264,7 @@ namespace std {
     std::complex<green::ac::gmp_float> r(x);
     r += y;
     return r;
-  } // LCOV_EXCL_LINE
+  }  // LCOV_EXCL_LINE
 
   inline auto operator-(const complex<green::ac::gmp_float>& x, const complex<green::ac::gmp_float>& y) {
     const green::ac::gmp_float&        a = x.real();
@@ -280,7 +274,7 @@ namespace std {
     std::complex<green::ac::gmp_float> r(x);
     r -= y;
     return r;
-  } // LCOV_EXCL_LINE
+  }  // LCOV_EXCL_LINE
 
   inline complex<green::ac::gmp_float> conj(const complex<green::ac::gmp_float>& x) {
     return complex<green::ac::gmp_float>(x.real(), -x.imag());

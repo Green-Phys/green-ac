@@ -89,12 +89,8 @@ namespace green::ac::nevanlinna {
       matrix_t result = matrix_t::Identity(2, 2);
       auto     z      = _grid[i];
       for (int j = 0; j < M; j++) {
-        prod(0, 0) = (z - _mesh[j]) / (z - std::conj(_mesh[j]));
-        prod(0, 1) = _phis[j];
-        prod(1, 0) = std::conj(_phis[j]) * ((z - _mesh[j]) / (z - std::conj(_mesh[j])));
-        prod(1, 1) = One;
-        // prod << (z - _mesh[j]) / (z - std::conj(_mesh[j])), _phis[j],
-        //     std::conj(_phis[j]) * ((z - _mesh[j]) / (z - std::conj(_mesh[j]))), One;
+        prod << (z - _mesh[j]) / (z - std::conj(_mesh[j])), _phis[j],
+            std::conj(_phis[j]) * ((z - _mesh[j]) / (z - std::conj(_mesh[j]))), One;
         result *= prod;
       }
       _coeffs[i] = result;
@@ -128,7 +124,6 @@ namespace green::ac::nevanlinna {
     size_t  nw = std::count_if(mesh.begin(), mesh.end(), [](const std::complex<double>& w) { return w.imag() > 0; });
     array_t data_in(nw);
     array_t mesh_in(nw);
-    // for (int64_t iw = mesh.shape()[0] - 1, iww = 0; iw >= 0; --iw) {
     for (int64_t iw = 0, iww = 0; iw < mesh.shape()[0]; ++iw) {
       if (mesh(iw).imag() < 0) continue;
       data_in(iww) = data(iw);
