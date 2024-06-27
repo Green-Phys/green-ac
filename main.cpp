@@ -42,8 +42,26 @@ void define_parameters(green::params::params& p) {
   p.define<green::ac::AC_KIND>("kind", "Type of continuation (currently only Nevanlinna is implemented)");
 }
 
+
+void sqrt_from_inverse(const green::ndarray::ndarray<std::complex<double>, 2>& in, green::ndarray::ndarray<std::complex<double>, 2>&& out) {
+  using Matrixcd   = Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
+  using matrix_t   = Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+  using mmatrix_t  = Eigen::Map<matrix_t>;
+  using cmmatrix_t = Eigen::Map<const matrix_t>;
+  size_t nso = in.shape()[0];
+  Eigen::SelfAdjointEigenSolver<Matrixcd> solver(nso);
+  Eigen::FullPivLU<matrix_t>              lusolver(nso, nso);
+  Matrixcd S_inv = cmmatrix_t(in.data(), nso, nso);
+  solver.compute(S_inv);
+  mmatrix_t(out.data(), nso, nso) =
+          solver.eigenvectors() * (solver.eigenvalues().cwiseSqrt().asDiagonal()) * solver.eigenvectors().adjoint();
+  mmatrix_t(out.data(), nso, nso) = lusolver.compute(mmatrix_t(out.data(), nso, nso)).inverse().eval();
+}
+
 void read_nevanlinna_data(const green::params::params& p, const green::grids::transformer_t& tr,
                           green::ndarray::ndarray<std::complex<double>, 4>& data) {
+  using matrix_t = Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+  using mmatrix_t = Eigen::Map<matrix_t>;//Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   std::vector<size_t> shape(4);
   if (!green::utils::context.global_rank) {
     green::h5pp::archive               ar(p["input_file"], "r");
@@ -54,13 +72,20 @@ void read_nevanlinna_data(const green::params::params& p, const green::grids::tr
     } else if (shape.size() == 5) {
       green::ndarray::ndarray<std::complex<double>, 5> tmp;
       ar[std::string(p["group"]) + "/data"s] >> tmp;
-      size_t dim_leading = std::accumulate(tmp.shape().begin(), tmp.shape().end() - 2, 1ul, std::multiplies<size_t>());
+      size_t dim_leading = std::accumulate(tmp.shape().begin() + 1, tmp.shape().end() - 2, 1ul, std::multiplies<size_t>());
       data.resize(shape[0], shape[1], shape[2], shape[3]);
-      auto tmp1 = tmp.reshape(dim_leading, shape[3], shape[4]);
-      auto tmp2 = data.reshape(dim_leading, shape[3]);
+      auto tmp1 = tmp.reshape(shape[0], dim_leading, shape[3], shape[4]);
+      auto tmp2 = data.reshape(shape[0], dim_leading, shape[3]);
+      green::ndarray::ndarray<std::complex<double>, 3> ovlp_inv(dim_leading, shape[3], shape[4]);
+      matrix_t G_orth(shape[3], shape[4]);
+      ovlp_inv << -(tmp1(0) + tmp1(shape[0]-1));
       for (size_t ld = 0; ld < dim_leading; ++ld) {
-        for (size_t i = 0; i < shape[3]; ++i) {
-          tmp2(ld, i) = tmp1(ld, i, i);
+        sqrt_from_inverse(ovlp_inv(ld), ovlp_inv(ld));
+        for (size_t it = 0; it < shape[0]; ++it) {
+          G_orth = (mmatrix_t(ovlp_inv(ld).data(), shape[3], shape[3]) * mmatrix_t(tmp1(it, ld).data(), shape[3], shape[3]) * mmatrix_t(ovlp_inv(ld).data(), shape[3], shape[3])).eval();
+          for (size_t i = 0; i < shape[3]; ++i) {
+            tmp2(it, ld, i) = G_orth(i,i);//tmp1(it, ld, i, i);
+          }
         }
       }
     } else {
@@ -97,16 +122,22 @@ void run_nevanlinna(const green::params::params& p) {
   size_t ns = data.shape()[1];
   size_t nw = p["n_omega"];
   data_out.resize(std::array<size_t, 4>{nw, data.shape()[1], nk, data.shape()[3]});
-  auto                                             iwgrid = tr.sd().repn_fermi().wsample() * std::complex<double>(0, 1);
+  auto iwgrid = tr.sd().repn_fermi().wsample() * std::complex<double>(0, 1);
+  data_out.set_zero();
   green::ndarray::ndarray<std::complex<double>, 1> wgrid(nw);
   for (size_t iw = 0; iw < wgrid.size(); ++iw) {
     wgrid(iw) = double(p["e_min"]) + (double(p["e_max"]) - double(p["e_min"])) * double(iw) / double(wgrid.size()) +
                 std::complex<double>(0.0, p["eta"]);
   }
+  size_t dim       = (nk * ns * nao);
+  double progress  = 0;
+  size_t last_step = 0;
+  double step_size = dim > green::utils::context.global_size ? (50.0 / (dim / green::utils::context.global_size)) : 0;
   if (!green::utils::context.global_rank) {
     std::cout << "Performing " + std::to_string(nk * ns * nao) + " continuations." << std::endl;
+    std::cout << "0%|" << std::setw(55) << std::right << "|100%" << std::endl << "  |" << std::flush;
   }
-  for (size_t iski = green::utils::context.global_rank; iski < nk * ns * nao; iski += green::utils::context.global_size) {
+  for (size_t iski = green::utils::context.global_rank; iski < dim; iski += green::utils::context.global_size) {
     size_t                                           i  = iski % nao;
     size_t                                           ik = ((iski / nao) % nk) + k_shift;
     size_t                                           is = iski / nao / nk;
@@ -122,8 +153,18 @@ void run_nevanlinna(const green::params::params& p) {
     for (size_t iw = 0; iw < out_w.shape()[0]; ++iw) {
       data_out(iw, is, ik - k_shift, i) = out_w(iw);
     }
-    std::cout << "Continuation " + std::to_string(iski) + " out of " + std::to_string(nk * ns * nao) + " finished." << std::endl;
+    if ((progress + 1) < ((iski * 100.0) / dim)) {
+      if (!green::utils::context.global_rank)
+        for (int step = last_step, curr = 0; step < 50 && curr < step_size; ++step, ++curr) {
+          std::cout << "=" << std::flush;
+          ++last_step;
+        }
+      progress = ((iski * 100.0) / dim);
+    }
   }
+  if (!green::utils::context.global_rank)
+    for (int step = last_step; step < 50; ++step) std::cout << "=" << std::flush;
+  if (!green::utils::context.global_rank) std::cout << "|" << std::endl;
   green::utils::allreduce(MPI_IN_PLACE, data_out.data(), data_out.size(), MPI_C_DOUBLE_COMPLEX, MPI_SUM,
                           green::utils::context.global);
   if (!green::utils::context.global_rank) {
