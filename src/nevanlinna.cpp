@@ -122,6 +122,8 @@ namespace green::ac::nevanlinna {
 
   void nevanlinna::solve(const array_t& mesh, const array_t& data) {
     size_t  nw = std::count_if(mesh.begin(), mesh.end(), [](const std::complex<double>& w) { return w.imag() > 0; });
+    // invalidate solved data
+    _grid.resize(0);
     array_t data_in(nw);
     array_t mesh_in(nw);
     for (int64_t iw = 0, iww = 0; iw < mesh.shape()[0]; ++iw) {

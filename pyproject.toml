@@ -1,0 +1,64 @@
+[build-system]
+requires = ["scikit-build-core", "pybind11"]
+build-backend = "scikit_build_core.build"
+#requires = ["setuptools"]
+#build-backend = "setuptools.build_meta"
+
+#[tool.setuptools]
+#packages = ["green_mbtools", "green_mbtools.mint", "green_mbtools.pesto", "mbanalysis"]
+
+[tool.scikit-build]
+cmake.define = {"GREEN_PYTHON"="ON"}
+wheel.packages = ["python/green_ac"]
+cmake.verbose = true
+
+[project]
+name = "green-ac"
+version = "0.2.4-beta"
+authors = [
+  { name="Sergei Iskakov", email="siskakov@umich.edu" },
+]
+
+dependencies = ["numpy", "h5py", "scipy", "mpi4py"]
+
+description = "Analytical continuation suits for Green Software Package"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+]
+
+[project.urls]
+Homepage = "https://green-phys.org"
+Issues = "https://github.com/Green-Phys/green-ac/issues"
+
+
+[project.optional-dependencies]
+tests = [
+  'coverage>=5.0.3',
+  'pytest',
+  'pytest-benchmark[histogram]>=3.2.1',
+]
+
+[tool.cibuildwheel]
+skip = ["*-musllinux*"]
+test-requires = "pytest"
+test-command = "pytest {project}/tests -k 'not test_projection_on_green'"
+
+manylinux-x86_64-image = "manylinux2014"
+
+
+
+[tool.cibuildwheel.linux]
+before-all = "yum install -y eigen3-devel gmp-devel"
+#test-command = "echo 'installed'"
+
+[tool.cibuildwheel.macos]
+before-all = "brew install eigen gmp"
+#test-command = "echo 'installed'"
+
