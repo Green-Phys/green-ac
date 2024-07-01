@@ -22,6 +22,8 @@ jobs:
         env:
           CIBW_BUILD: cp38-* cp39-* cp310-* cp311-* cp312-*
           CIBW_ARCHS: ${{ matrix.plat.arch }}
+          CIBW_ENVIRONMENT_MACOS:
+            GMP_DIR="/opt/homebrew"
           CIBW_ENVIRONMENT: >
             MACOSX_DEPLOYMENT_TARGET=${{ matrix.plat.target }}
         # env:
