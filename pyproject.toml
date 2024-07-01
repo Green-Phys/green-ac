@@ -51,6 +51,6 @@ before-all = "yum install -y eigen3-devel gmp-devel"
 #test-command = "echo 'installed'"
 
 [tool.cibuildwheel.macos]
-before-all = "brew install eigen gmp"
-test-command = "echo 'installed'; env"
+before-all = "brew install eigen gmp ; env"
+test-command = "echo 'installed'"
 
