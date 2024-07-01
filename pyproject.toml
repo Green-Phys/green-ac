@@ -46,6 +46,11 @@ test-requires = "pytest"
 test-command = "pytest {project}/test"
 manylinux-x86_64-image = "manylinux_2_28"
 
+
+[[tool.cibuildwheel.overrides]]
+select = "*-macosx_*"
+environment = {GMP_DIR="/opt/homebrew"}
+
 [tool.cibuildwheel.linux]
 before-all = "yum install -y eigen3-devel gmp-devel"
 #test-command = "echo 'installed'"
@@ -53,4 +58,6 @@ before-all = "yum install -y eigen3-devel gmp-devel"
 [tool.cibuildwheel.macos]
 before-all = "brew install eigen gmp ; env"
 test-command = "echo 'installed'"
+
+
 
