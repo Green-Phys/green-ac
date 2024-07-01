@@ -22,11 +22,6 @@ namespace green::ac::nevanlinna {
     size_t                size = std::accumulate(shape.begin(), shape.end(), (size_t)1, std::multiplies<size_t>());
     std::complex<double>* foo  = new std::complex<double>[size];
 
-    int nprocs;
-    int rank;
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
     py::ssize_t inner_dim = std::accumulate(shape.begin() + 1, shape.end(), (size_t)1, std::multiplies<size_t>());
     py::array_t<std::complex<double>, py::array::c_style | py::array::forcecast> ldata = data.reshape({data.shape(0), inner_dim});
 
@@ -41,7 +36,7 @@ namespace green::ac::nevanlinna {
     std::copy(grid.data(), grid.data() + grid.size(), wgrid.begin());
 
     green::ac::nevanlinna::nevanlinna ac(precision);
-    for (size_t ind = rank; ind < inner_dim; ind += nprocs) {
+    for (size_t ind = 0; ind < inner_dim; ++ind) {
       for (size_t iw = 0; iw < data.shape(0); ++iw) {
         green_data(iw) = ldata.at(iw, ind);
       }
@@ -51,7 +46,6 @@ namespace green::ac::nevanlinna {
         data_out(iw, ind) = out_w(iw);
       }
     }
-    MPI_Allreduce(MPI_IN_PLACE, data_out.data(), data_out.size(), MPI_C_DOUBLE_COMPLEX, MPI_SUM, MPI_COMM_WORLD);
 
     // Create a Python object that will free the allocated
     // memory when destroyed:

@@ -1,9 +1,7 @@
-#include <mpi.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 
 #include <complex>
-// #include <mpi4py/mpi4py.h>
 
 #include "nevanlinna.h"
 
@@ -47,7 +45,7 @@ namespace green::ac {
       data      : Matsubara frequency data, we assume that leading dimension is frequency,
                   then continuation will be done for all inner dimensions separately
       precision : GMP precision in bits
-    )pbdoc", py::arg("kind"),py::arg("im_grid"),  py::arg("grid"), py::arg("data"), py::arg("precision") = 128);
+    )pbdoc", py::arg("kind"), py::arg("im_grid"), py::arg("grid"), py::arg("data"), py::arg("precision") = 128);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);

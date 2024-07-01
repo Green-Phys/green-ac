@@ -22,7 +22,6 @@
 #ifndef GREEN_AC_PY_NEVANLINNA_H
 #define GREEN_AC_PY_NEVANLINNA_H
 
-#include <mpi.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 

@@ -28,19 +28,20 @@ if (Build_Tests)
 endif ()
 
 if( ${GREEN_PYTHON} )
+    set_property(TARGET ac PROPERTY POSITION_INDEPENDENT_CODE ON)
     set(PYBIND11_FINDPYTHON ON)
     find_package(pybind11 CONFIG REQUIRED)
-    find_package(MPI REQUIRED)
 
     message(STATUS "Building python packaging")
 
     pybind11_add_module(_green_ac python/main.cpp python/nevanlinna.cpp)
-    target_link_libraries(_green_ac PUBLIC GREEN::AC MPI::MPI_CXX)
+    target_link_libraries(_green_ac PUBLIC GREEN::AC)
 
     # EXAMPLE_VERSION_INFO is defined by setup.py and passed into the C++ code as a
     # define (VERSION_INFO) here.
     target_compile_definitions(_green_ac
                            PRIVATE VERSION_INFO=${EXAMPLE_VERSION_INFO})
+    set_property(TARGET _green_ac PROPERTY POSITION_INDEPENDENT_CODE ON)
 
     install(TARGETS _green_ac DESTINATION green_ac)
     message(STATUS ${CMAKE_INSTALL_PREFIX})
