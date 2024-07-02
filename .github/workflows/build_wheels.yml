@@ -12,6 +12,7 @@ jobs:
         plat: 
         - { os: ubuntu-latest, target: "", arch: x86_64, homebrew: ''}
         - { os: macos-13, target: "13.0" , arch: x86_64, homebrew: '/usr/local'}
+        - { os: macos-13, target: "13.0" , arch: arm64, homebrew: '/opt/homebrew'}
         - { os: macos-14, target: "14.0" , arch: arm64, homebrew: '/opt/homebrew'}
 
     steps:
@@ -27,7 +28,7 @@ jobs:
             GMP_DIR=${{ matrix.plat.homebrew }}
             MACOSX_DEPLOYMENT_TARGET=${{ matrix.plat.target }}
 #          CIBW_ENVIRONMENT: >
-            
+
         # env:
         #   CIBW_SOME_OPTION: value
         #    ...
