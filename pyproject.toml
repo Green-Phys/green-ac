@@ -9,7 +9,7 @@ cmake.verbose = true
 
 [project]
 name = "green-ac"
-version = "0.2.4-beta"
+version = "0.2.4-beta2"
 authors = [
   { name="Sergei Iskakov", email="siskakov@umich.edu" },
 ]
