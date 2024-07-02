@@ -36,3 +36,6 @@
 *.exe
 *.out
 *.app
+
+# Python caches
+**__pycache__*/

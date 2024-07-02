@@ -5,7 +5,7 @@ import numpy as np
 
 
 def test_two_peaks():
-    imgrid = 1.j * (2*np.linspace(0,100,101) + 1) * np.pi/ 2
+    imgrid = 1.j * (2*np.linspace(-50,49,100) + 1) * np.pi/ 2
     grid = np.linspace(-2,2,1001) + 0.01j
     data = 0.5*(1/(imgrid + 0.5) + 1/(imgrid - 0.5))
     data_test = 0.5*(1/(grid + 0.5) + 1/(grid - 0.5))
