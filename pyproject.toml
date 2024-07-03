@@ -9,7 +9,7 @@ cmake.verbose = true
 
 [project]
 name = "green-ac"
-version = "0.2.4-beta3"
+version = "0.2.4"
 authors = [
   { name="Sergei Iskakov", email="siskakov@umich.edu" },
 ]
@@ -20,7 +20,7 @@ description = "Analytical continuation suits for Green Software Package"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX",
