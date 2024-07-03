@@ -56,7 +56,7 @@ def _solve_nevanlinna(mgrid, grid, data, **kwargs):
     fs = []
     chunks = np.array_split(range(lin_s), _ncpus)
     # create a process pool
-    with concurrent.futures.ProcessPoolExecutor(_ncpus, mp_context=multiprocessing.get_context('fork')) as executor:
+    with concurrent.futures.ProcessPoolExecutor(_ncpus, mp_context=multiprocessing.get_context('forkserver')) as executor:
         for i in chunks:
             if len(i) == 0:
                 continue
