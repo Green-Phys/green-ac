@@ -1,6 +1,7 @@
 import concurrent.futures
 import functools
 import importlib.util as ilu
+import multiprocessing
 import os
 
 import numpy as np
@@ -55,11 +56,10 @@ def _solve_nevanlinna(mgrid, grid, data, **kwargs):
     fs = []
     chunks = np.array_split(range(lin_s), _ncpus)
     # create a process pool
-    with concurrent.futures.ProcessPoolExecutor(_ncpus) as executor:
+    with concurrent.futures.ProcessPoolExecutor(_ncpus, mp_context=multiprocessing.get_context('fork')) as executor:
         for i in chunks:
             if len(i) == 0:
                 continue
-            print(i)
             f = executor.submit(_solve_nevanlinna_conc, "Nevanlinna", mgrid * 1.j, grid + eta * 1.j, data_rs[:, i],
                                 prec)
             fs.append(f)
