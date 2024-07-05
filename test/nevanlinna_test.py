@@ -107,4 +107,6 @@ def test_from_file():
     data = Xiw[:, 1] + 1.j * Xiw[:, 2]
     test_data = Xw[:, 1]
     data_out = green_ac.solve("Nevanlinna", mgrid, grid, data, eta=0.01)
-    np.allclose(test_data, -data_out.imag / np.pi, atol=1e-3)
+    # check that data near Fermi is as expected
+    inds = np.logical_and(grid<0.07, grid>-0.08)
+    assert np.allclose(test_data[inds], -data_out[inds].imag / np.pi, atol=1e-4)
