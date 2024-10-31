@@ -44,7 +44,7 @@ tests = [
 skip = ["*-musllinux*"]
 test-requires = "pytest"
 test-command = "pytest {project}/test"
-manylinux-x86_64-image = "manylinux_2014"
+manylinux-x86_64-image = "manylinux2014"
 
 [tool.cibuildwheel.linux]
 before-all = "yum install -y eigen3-devel gmp-devel"
