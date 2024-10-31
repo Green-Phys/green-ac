@@ -9,7 +9,7 @@ cmake.verbose = true
 
 [project]
 name = "green-ac"
-version = "0.2.4"
+version = "0.2.5"
 authors = [
   { name="Sergei Iskakov", email="siskakov@umich.edu" },
 ]
@@ -44,7 +44,7 @@ tests = [
 skip = ["*-musllinux*"]
 test-requires = "pytest"
 test-command = "pytest {project}/test"
-manylinux-x86_64-image = "manylinux_2_28"
+manylinux-x86_64-image = "manylinux_2014"
 
 [tool.cibuildwheel.linux]
 before-all = "yum install -y eigen3-devel gmp-devel"
