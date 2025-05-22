@@ -12,35 +12,34 @@ jobs:
     strategy:
       fail-fast: false
 
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
 
     - name: Build
-      run: |
-        module load BuildEnv/gcc-12.2.0.lua gmp/6.2.1;
-        mkdir build && cd build && cmake  -DCMAKE_CXX_FLAGS=" --coverage -fno-inline -fno-inline-small-functions -fno-default-inline -fprofile-arcs -ftest-coverage " ..;
-        make -j2 || make -j1 VERBOSE=1
+      run: |        
+        sudo apt-get update
+        sudo apt-get install openmpi-bin openmpi-common libopenmpi-dev
+        sudo apt-get install libhdf5-serial-dev
+        sudo apt-get install libeigen3-dev
+        sudo apt-get install libopenblas-dev 
+        sudo apt-get install lcov
+
+        mkdir build;
+        cd build;
+        cmake -DCMAKE_CXX_FLAGS=" --coverage -fno-inline -fno-inline-small-functions -fno-default-inline -fprofile-arcs -ftest-coverage " .. ;
+        make -j4;
 
     - name: Test
-      env:
-        HDF5_USE_FILE_LOCKING: 'FALSE'
       run: |
-        module load BuildEnv/gcc-12.2.0.lua gmp/6.2.1;
         cd build;
-        ctest -j4 --output-on-failure
+        ctest -j1;
     - name: Run coverage
       run: |
-        module load BuildEnv/gcc-12.2.0.lua gmp/6.2.1;
         cd build;
-        lcov --capture --directory . --output-file coverage.info;
-        lcov --remove coverage.info '/usr/*' --output-file coverage.info
-        lcov --remove coverage.info '/opt/ohpc/pub/compiler/*' --output-file coverage.info
-        lcov --remove coverage.info '*catch*' --output-file coverage.info
-        lcov --list coverage.info
-
+        lcov --ignore-errors source,source --capture --directory . --output-file coverage.info;
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
       env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
