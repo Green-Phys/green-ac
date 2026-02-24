@@ -70,6 +70,7 @@ void sqrt_from_inverse(const green::ndarray::ndarray<std::complex<double>, 2>& i
  * @throws green::ac::ac_data_shape_error if the input data shape is not 4- or 5-dimensional.
  * @throws green::ac::ac_data_error if the data grid size and grid in grid_file are mismatched.
  * @throws green::grids::outdated_grids_file_error if the grids file version is incompatible with the input data file version.
+ * @throws std::runtime_error for any other errors during file reading and processing.
  */
 void read_nevanlinna_data(const green::params::params& p, const green::grids::transformer_t& tr,
                           green::ndarray::ndarray<std::complex<double>, 4>& data) {
