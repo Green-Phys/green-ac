@@ -22,8 +22,8 @@
 #ifndef GREEN_AC_COMMON_DEFS_H
 #define GREEN_AC_COMMON_DEFS_H
 
-#include <string>
 #include <stdexcept>
+#include <cstdio>
 
 namespace green::ac {
   enum AC_KIND {
