@@ -59,14 +59,17 @@ void sqrt_from_inverse(const green::ndarray::ndarray<std::complex<double>, 2>& i
 }
 
 /**
- * @brief Reads the Green's function data, checks consistency with the grid, and performs orthogonalization if necessary.
+ * @brief Reads the Green's function data from HDF5 file, checks consistency with the grid, and performs orthogonalization if necessary.
  * 
  * @param p - green::params::params object containing input parameters, including file names and group names.
  * @param tr - green::grids::transformer_t object containing grid information and transformation utilities.
- * @param data - green::ndarray::ndarray<std::complex<double>, 4> object to store the read and processed Green's function data.
- *               The expected shape is (ntau, ns, nk, nao) for diagonal orbital data or (ntau, ns, nk, nao, nao) for matrix-valued data.
- * @throws green::ac::ac_data_shape_error if the input data shape is not 4 or 5.
+ * @param data - green::ndarray::ndarray<std::complex<double>, 4> object to store the read and processed (diagonal) Green's function data.
+ *                The input HDF5 dataset may be 4D with shape (ntau, ns, nk, nao) for diagonal orbital data or 5D with
+ *                shape (ntau, ns, nk, nao, nao) for matrix-valued data. In both cases @p data will stores the resulting 4D diagonal
+ *                Green's function data with shape (ntau, ns, nk, nao).
+ * @throws green::ac::ac_data_shape_error if the input data shape is not 4- or 5-dimensional.
  * @throws green::ac::ac_data_error if the data grid size and grid in grid_file are mismatched.
+ * @throws green::grids::outdated_grids_file_error if the grids file version is incompatible with the input data file version.
  */
 void read_nevanlinna_data(const green::params::params& p, const green::grids::transformer_t& tr,
                           green::ndarray::ndarray<std::complex<double>, 4>& data) {
