@@ -20,6 +20,7 @@
  */
 
 #include <green/ac/except.h>
+#include <green/ac/common_defs.h>
 #include <green/ac/nevanlinna.h>
 
 #include <catch2/catch_session.hpp>
@@ -103,7 +104,6 @@ TEST_CASE("Nevanlinna Solver") {
 }
 
 TEST_CASE("Version String Comparison") {
-  using green::grids::compare_version_strings;
   REQUIRE(compare_version_strings("1.2.3", "1.2.3") == 0);
   REQUIRE(compare_version_strings("1.2.3", "1.2.4") < 0);
   REQUIRE(compare_version_strings("1.2.3", "1.3.0") < 0);
