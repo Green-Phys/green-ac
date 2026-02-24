@@ -92,8 +92,7 @@ void read_nevanlinna_data(const green::params::params& p, const green::grids::tr
     if (grids_check != 0) {
       throw green::grids::outdated_grids_file_error("Grids file version (" + grid_version_in_ir_file + 
                                                         ") is incompatible with input data file version (" + grids_version_in_data_file + 
-                                                        "). Please download a grids file with matching version from
-                                                        https://github.com/green-phys/green-grids/tags.");
+                                                        "). Please download a grids file with matching version from https://github.com/green-phys/green-grids/tags.");
     }
 
     // Read Green's function data
