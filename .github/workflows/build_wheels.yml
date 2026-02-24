@@ -11,7 +11,6 @@ jobs:
         # macos-13 is an intel runner, macos-14 is apple silicon
         plat: 
         - { os: ubuntu-22.04, target: "", arch: x86_64, homebrew: ''}
-        - { os: macos-13, target: "13.0" , arch: x86_64, homebrew: '/usr/local'}
         - { os: macos-14, target: "14.0" , arch: arm64, homebrew: '/opt/homebrew'}
 
     steps:
@@ -26,7 +25,12 @@ jobs:
           CIBW_ENVIRONMENT_MACOS: >
             GMP_DIR=${{ matrix.plat.homebrew }}
             MACOSX_DEPLOYMENT_TARGET=${{ matrix.plat.target }}
-#          CIBW_ENVIRONMENT: >
+          CIBW_ENVIRONMENT: >
+            OPENBLAS_NUM_THREADS=1
+            OMP_NUM_THREADS=1
+            MKL_NUM_THREADS=1
+            VECLIB_MAXIMUM_THREADS=1
+            NUMEXPR_NUM_THREADS=1
 
         # env:
         #   CIBW_SOME_OPTION: value

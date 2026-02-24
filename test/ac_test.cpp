@@ -20,6 +20,7 @@
  */
 
 #include <green/ac/except.h>
+#include <green/ac/common_defs.h>
 #include <green/ac/nevanlinna.h>
 
 #include <catch2/catch_session.hpp>
@@ -100,4 +101,12 @@ TEST_CASE("Nevanlinna Solver") {
   ndarray<std::complex<double>, 1> result2 = a.evaluate(re_grid);
   REQUIRE(std::equal(result2.begin(), result2.end(), re_data.begin(),
                      [](const std::complex<double>& x, const std::complex<double>& y) { return std::abs(x - y) < 1e-12; }));
+}
+
+TEST_CASE("Version String Comparison") {
+  REQUIRE(compare_version_strings("1.2.3", "1.2.3") == 0);
+  REQUIRE(compare_version_strings("1.2.3", "1.2.4") < 0);
+  REQUIRE(compare_version_strings("1.2.3", "1.3.0") < 0);
+  REQUIRE(compare_version_strings("1.2.3", "2.0.0") < 0);
+  REQUIRE(compare_version_strings("1.2.3", "1.2.3-alpha") == 0);
 }
