@@ -78,23 +78,11 @@ void read_nevanlinna_data(const green::params::params& p, const green::grids::tr
   using mmatrix_t = Eigen::Map<matrix_t>;//Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   std::vector<size_t> shape(4);
   if (!green::utils::context.global_rank) {
+    // Check grids-version consistency
+    green::grids::check_grids_version_in_hdf5(p["input_file"], tr.get_version());
+
     // Open Green's function data file
     green::h5pp::archive               ar(p["input_file"], "r");
-
-    // Check grids-version consistency
-    std::string grids_version_in_data_file;
-    if (ar.has_attribute("__grids_version__")) {
-      grids_version_in_data_file = ar.get_attribute<std::string>("__grids_version__");
-    } else {
-      grids_version_in_data_file = green::grids::GRIDS_MIN_VERSION;
-    }
-    const std::string& grid_version_in_ir_file = tr.get_version();
-    int grids_check = green::ac::compare_version_strings(grids_version_in_data_file, grid_version_in_ir_file);
-    if (grids_check != 0) {
-      throw green::grids::outdated_grids_file_error("Grids file version (" + grid_version_in_ir_file + 
-                                                        ") is incompatible with input data file version (" + grids_version_in_data_file + 
-                                                        "). Please download a grids file with matching version from https://github.com/green-phys/green-grids/tags.");
-    }
 
     // Read Green's function data
     shape = green::h5pp::dataset_shape(ar.current_id(), std::string(p["group"]) + "/data"s);
