@@ -22,10 +22,6 @@
 #ifndef GREEN_AC_COMMON_DEFS_H
 #define GREEN_AC_COMMON_DEFS_H
 
-#include <stdexcept>
-#include <cstdio>
-#include <string>
-
 namespace green::ac {
   enum AC_KIND {
     Nevanlinna
