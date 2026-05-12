@@ -77,7 +77,7 @@ void read_nevanlinna_data(const green::params::params& p, const green::grids::tr
   using matrix_t = Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   using mmatrix_t = Eigen::Map<matrix_t>;//Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   std::vector<size_t> shape(4);
-  if (!green::utils::context.global_rank) {
+  if (!green::utils::context().global_rank) {
     // Check grids-version consistency
     green::grids::check_grids_version_in_hdf5(p["input_file"], tr.get_version());
 
@@ -123,11 +123,11 @@ void read_nevanlinna_data(const green::params::params& p, const green::grids::tr
     }
     ar.close();
   }
-  MPI_Bcast(shape.data(), 4, MPI_UNSIGNED_LONG, 0, green::utils::context.global);
-  if (green::utils::context.global_rank) {
+  MPI_Bcast(shape.data(), 4, MPI_UNSIGNED_LONG, 0, green::utils::context().global);
+  if (green::utils::context().global_rank) {
     data.resize(shape);
   }
-  MPI_Bcast(data.data(), data.size(), MPI_CXX_DOUBLE_COMPLEX, 0, green::utils::context.global);
+  MPI_Bcast(data.data(), data.size(), MPI_CXX_DOUBLE_COMPLEX, 0, green::utils::context().global);
 }
 
 void run_nevanlinna(const green::params::params& p) {
@@ -154,12 +154,12 @@ void run_nevanlinna(const green::params::params& p) {
   size_t dim       = (nk * ns * nao);
   double progress  = 0;
   size_t last_step = 0;
-  double step_size = dim > green::utils::context.global_size ? (50.0 / (dim / green::utils::context.global_size)) : 0;
-  if (!green::utils::context.global_rank) {
+  double step_size = dim > green::utils::context().global_size ? (50.0 / (dim / green::utils::context().global_size)) : 0;
+  if (!green::utils::context().global_rank) {
     std::cout << "Performing " + std::to_string(nk * ns * nao) + " continuations." << std::endl;
     std::cout << "0%|" << std::setw(55) << std::right << "|100%" << std::endl << "  |" << std::flush;
   }
-  for (size_t iski = green::utils::context.global_rank; iski < dim; iski += green::utils::context.global_size) {
+  for (size_t iski = green::utils::context().global_rank; iski < dim; iski += green::utils::context().global_size) {
     size_t                                           i  = iski % nao;
     size_t                                           ik = ((iski / nao) % nk) + k_shift;
     size_t                                           is = iski / nao / nk;
@@ -176,7 +176,7 @@ void run_nevanlinna(const green::params::params& p) {
       data_out(iw, is, ik - k_shift, i) = out_w(iw);
     }
     if ((progress + 1) < ((iski * 100.0) / dim)) {
-      if (!green::utils::context.global_rank)
+      if (!green::utils::context().global_rank)
         for (int step = last_step, curr = 0; step < 50 && curr < step_size; ++step, ++curr) {
           std::cout << "=" << std::flush;
           ++last_step;
@@ -184,12 +184,12 @@ void run_nevanlinna(const green::params::params& p) {
       progress = ((iski * 100.0) / dim);
     }
   }
-  if (!green::utils::context.global_rank)
+  if (!green::utils::context().global_rank)
     for (int step = last_step; step < 50; ++step) std::cout << "=" << std::flush;
-  if (!green::utils::context.global_rank) std::cout << "|" << std::endl;
+  if (!green::utils::context().global_rank) std::cout << "|" << std::endl;
   green::utils::allreduce(MPI_IN_PLACE, data_out.data(), data_out.size(), MPI_C_DOUBLE_COMPLEX, MPI_SUM,
-                          green::utils::context.global);
-  if (!green::utils::context.global_rank) {
+                          green::utils::context().global);
+  if (!green::utils::context().global_rank) {
     green::h5pp::archive ar(p["output_file"], "w");
     ar[std::string(p["group"]) + "/data"s] << data_out;
     ar[std::string(p["group"]) + "/mesh"s] << wgrid;
@@ -211,11 +211,11 @@ int main(int argc, char** argv) {
   green::grids::define_parameters(p);
   define_parameters(p);
   if (!p.parse(argc, argv)) {
-    if (!green::utils::context.global_rank) p.help();
+    if (!green::utils::context().global_rank) p.help();
     MPI_Finalize();
     return -1;
   }
-  if (!green::utils::context.global_rank) p.print();
+  if (!green::utils::context().global_rank) p.print();
 
   try {
     switch (p["kind"].as<green::ac::AC_KIND>()) {
@@ -226,8 +226,8 @@ int main(int argc, char** argv) {
         throw std::runtime_error("Only Nevanlinna is implemented for now");
     }
   } catch (std::exception& e) {
-    if (!green::utils::context.global_rank) std::cerr << e.what() << std::endl;
-    MPI_Abort(green::utils::context.global, -1);
+    if (!green::utils::context().global_rank) std::cerr << e.what() << std::endl;
+    MPI_Abort(green::utils::context().global, -1);
   }
 
   MPI_Finalize();
