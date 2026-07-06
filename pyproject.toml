@@ -5,11 +5,11 @@ build-backend = "scikit_build_core.build"
 [tool.scikit-build]
 cmake.define = {"GREEN_PYTHON"="ON"}
 wheel.packages = ["python/green_ac"]
-cmake.verbose = true
+build.verbose = true
 
 [project]
 name = "green-ac"
-version = "0.2.6"
+version = "0.2.7"
 authors = [
   { name="Sergei Iskakov", email="siskakov@umich.edu" },
 ]
