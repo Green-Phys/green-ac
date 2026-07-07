@@ -9,9 +9,13 @@ build.verbose = true
 
 [project]
 name = "green-ac"
-version = "0.2.7"
+version = "0.2.8"
 authors = [
   { name="Sergei Iskakov", email="siskakov@umich.edu" },
+]
+
+maintainers = [
+  { name="Gaurav Harsha", email="gharsha@umich.edu" },
 ]
 
 dependencies = ["numpy", "h5py", "scipy"]
