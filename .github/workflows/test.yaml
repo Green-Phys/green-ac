@@ -7,6 +7,29 @@ on:
     branches: [ main ]
 
 jobs:
+  build-macos:
+    # Build and test on the newest macOS runner (Apple silicon), Homebrew toolchain.
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          brew install open-mpi hdf5 eigen openblas gmp mpfr
+
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(brew --prefix)"
+          cmake --build build -j 3
+
+      - name: Test
+        env:
+          HDF5_USE_FILE_LOCKING: 'FALSE'
+          OMP_NUM_THREADS: 1
+        run: |
+          ctest --test-dir build -j 1 --output-on-failure
+
   build:
 
     strategy:
