@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Build
       run: |        
@@ -38,8 +38,8 @@ jobs:
     - name: Run coverage
       run: |
         cd build;
-        lcov --ignore-errors source,source --capture --directory . --output-file coverage.info;
+        lcov --ignore-errors source,source,inconsistent,inconsistent --capture --directory . --output-file coverage.info;
     - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v7
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
