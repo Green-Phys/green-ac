@@ -16,10 +16,10 @@ jobs:
     runs-on: ${{ matrix.plat.os }}
     strategy:
       matrix:
-        # macos-13 is an intel runner, macos-15 is apple silicon
+        # macos-13 is an intel runner, macos-latest is apple silicon
         plat: 
         - { os: ubuntu-22.04, target: "", arch: x86_64, homebrew: ''}
-        - { os: macos-15, target: "14.0" , arch: arm64, homebrew: '/opt/homebrew'}
+        - { os: macos-latest, target: "14.0" , arch: arm64, homebrew: '/opt/homebrew'}
 
     steps:
       - uses: actions/checkout@v7
