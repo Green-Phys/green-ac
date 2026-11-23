@@ -38,7 +38,7 @@ jobs:
     - name: Run coverage
       run: |
         cd build;
-        lcov --ignore-errors source,source --capture --directory . --output-file coverage.info;
+        lcov --ignore-errors source,source,inconsistent,inconsistent --capture --directory . --output-file coverage.info;
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v7
       env:
